@@ -65,7 +65,7 @@ Rank              1 WORD (ENUM: 0 normal, 1 preferred, 2 deprecated)
 | 속성 `P…` | WIKIDATA-PID Reference | |
 | Lexeme `L…`, EntitySchema `E…` | 건너뜀 | Reference Codec 없음 |
 | string, external-id | UTF8-TEXT | 정규화 주장 없음 |
-| time | GREGORIAN-DATE | 아래 조건일 때만 |
+| time | GREGORIAN-DATE, EDTF, GEDCOM-DATE, 그 밖은 원문 UTF8-TEXT | 아래 "날짜" |
 | novalue, somevalue | 건너뜀 | DB에 값이 비어 있다 |
 | quantity, monolingualtext, globecoordinate 등 | 건너뜀 | 이번 범위 밖 |
 
@@ -90,7 +90,11 @@ Q1~Q1000의 time 클레임 1,176건 중 건너뛴 것:
 
 - 변환(구현·연결됨): 일 → GREGORIAN-DATE, 월 `1952-03`, 연 `1952`, 10년 `195X` → EDTF. 기원전은 위키데이터 역사식 연도(-0044 = 기원전 44년)를 EDTF 천문식(-0043)으로 한 칸 옮긴다. ±9999를 넘는 연도는 `Y` 접두(go-edtf가 아직 지원하지 않아 검증 불가).
 - Q1~Q1000 재실행: time 클레임 중 건너뛴 것은 율리우스력 223, 세기 이상 정밀도 4, 시간대·오차 범위 1뿐이다(달력을 정밀도보다 먼저 검사하므로 율리우스력 수가 늘었다).
-- 미결정: 세기·천년 이상 정밀도를 EDTF 미상 자릿수(`19XX`)로 옮기는 규칙(위키데이터의 세기 표기 해석), 율리우스력(EDTF는 그레고리력만), before·after.
+- 율리우스력(결정·반영 2026-10-25): **GEDCOM-DATE**(GEDCOM 7 날짜 값 문자열) Value `0x26`/`0x27`, docs/value/time/GEDCOM-DATE.md. 원본 표기를 그대로 보존한다(`JULIAN 14 OCT 1066`, `JULIAN OCT 1066`, `JULIAN 1066`, `JULIAN 15 MAR 44 BCE`). 위키데이터와 GEDCOM 모두 역사식 연도라 기원전 숫자를 그대로 쓴다. 검증은 `github.com/cacack/gedcom-go/v3`(MIT, Go 1.25.11 필요)의 `ParseDate`·`Validate`이며, `Validate`는 그레고리력에서만 날을 검사해(율리우스력은 겹연도만) `JULIAN 30 FEB 1100`·`JULIAN 40 OCT 1066`을 통과시키므로 실재하는 날은 도구가 직접 검사한다. `ToGregorian`은 연·월 정밀도를 실제로 변환하지 않아(`JULIAN 1300` → 그레고리력 1300) 쓰지 않는다.
+- 이중 기록(방침 2026-10-25): 원본(GEDCOM-DATE)과 정규화 값을 각각 Value로 둔다. 정규화 값은 일이면 GREGORIAN-DATE(EDTF 정규형 V6), 연·월이면 그레고리력 구간 EDTF(`JULIAN 1300` → `1300-01-09/1301-01-08`). **한 STATEMENT에 두 Value를 잇는 방법이 미결정이라 지금은 원본만 쓴다.**
+- **방침(2026-10-25): GREGORIAN-DATE·EDTF·GEDCOM-DATE로 옮기지 못하는 날짜는 전부 위키데이터 datavalue JSON 원문을 UTF8-TEXT로 그대로 쓴다.** 날짜는 건너뛰지 않는다. 예: 율리우스력 10년·세기·천년 이상, 그레고리력 세기 이상, 시간대·오차 범위가 있는 날짜.
+- Q1~Q1000 재실행: 율리우스력 223건 중 170건은 GEDCOM-DATE, 53건은 원문. 그레고리력 세기 이상 4건, 시간대·오차 범위 1건도 원문. 건너뛴 날짜 0건.
+- 미결정: 세기·천년 이상 정밀도(EDTF 미상 자릿수 `19XX` 규칙, 율리우스력은 원문 텍스트), before·after, 두 Value를 잇는 방법.
 
 이전 제안(참고):
 
