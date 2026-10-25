@@ -1,0 +1,4 @@
+github.com/lib/pq v1.10.9 h1:YXG7RB+JIjhP29X+OtkiDnYaXQwpS4JEWq7dtCCRUEw=
+github.com/lib/pq v1.10.9/go.mod h1:AlVN5x4E4T544tWzH6hKfbfQvm3HdbOxrmggDNAPY9o=
+github.com/sfomuseum/go-edtf v1.3.0 h1:07oBf8NcWmpwIzUz/WMgTz1huQNVdiJ/IjFzkIRGj2Q=
+github.com/sfomuseum/go-edtf v1.3.0/go.mod h1:4RLvbBp7XhqRuDVhJjYUKY5napMKQvcZxQnIb/i1tyo=
