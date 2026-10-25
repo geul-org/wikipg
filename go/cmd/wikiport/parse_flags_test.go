@@ -12,8 +12,8 @@ func TestParseFlags(t *testing.T) {
 	if err != nil || c.Root != "." || c.From != 1 || c.To != 1000 || !slices.Equal(c.Langs, []string{"ko", "en"}) || c.Commit != "abc" {
 		t.Fatalf("defaults: %+v %v", c, err)
 	}
-	c, err = parseFlags([]string{"-commit", "abc", "-from", "5", "-to", "9", "-langs", "en", "-report", "r.tsv", "-root", "/x"})
-	if err != nil || c.From != 5 || c.To != 9 || !slices.Equal(c.Langs, []string{"en"}) || c.Report != "r.tsv" || c.Root != "/x" {
+	c, err = parseFlags([]string{"-commit", "abc", "-from", "5", "-to", "9", "-langs", "en, ko", "-report", "r.tsv", "-root", "/x"})
+	if err != nil || c.From != 5 || c.To != 9 || !slices.Equal(c.Langs, []string{"en", "ko"}) || c.Report != "r.tsv" || c.Root != "/x" {
 		t.Fatalf("overrides: %+v %v", c, err)
 	}
 	for _, args := range [][]string{{}, {"-commit", "a", "-from", "0"}, {"-commit", "a", "-from", "9", "-to", "5"}, {"-nope"}} {

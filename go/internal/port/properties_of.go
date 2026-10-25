@@ -9,10 +9,12 @@ import (
 )
 
 // propertiesOf returns the properties a converted claim uses: the predicate,
-// and the value when it is a property ID (P…).
+// and the value when it is a property entity (P…). A string or external ID
+// that happens to start with P is not a property.
 func propertiesOf(c source.Claim) []string {
 	ps := []string{c.Property}
-	if strings.HasPrefix(c.Value, "P") {
+	entity := c.Type == "wikibase-entityid" || c.Type == "wikibase-item" || c.Type == "wikibase-property"
+	if entity && strings.HasPrefix(c.Value, "P") {
 		ps = append(ps, c.Value)
 	}
 	return ps

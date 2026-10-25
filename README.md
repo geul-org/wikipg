@@ -90,9 +90,9 @@ go run ./cmd/wikiport -root ../.. -from 1 -to 1000 -commit "$(git rev-parse HEAD
 | `-from`, `-to` | QID 범위 | 1, 1000 |
 | `-langs` | 레이블·별칭 언어 | `ko,en` |
 | `-commit` | TRANSFORMED-BY에 남길 포팅 도구 커밋 (필수) | |
-| `-report` | 개체별 건수·건너뛴 사유 TSV | 없음 |
+| `-report` | 개체별 건수·건너뛴 사유·원문 보존 날짜의 사유 TSV (열: id, labels, aliases, statements, skipped, raw) | 없음 |
 | `-dsn` | PostgreSQL DSN | 비우면 PG* 환경변수 |
 
-- Q 범위를 먼저 옮기고, 그 문서들이 쓴 속성을 이어서 옮긴 뒤 두 Issuer의 `documents.geul`을 쓴다.
+- Q 범위를 먼저 옮기고, 그 문서들이 쓴 속성(Predicate, 값이 속성 개체인 것)을 이어서 옮긴 뒤 두 Issuer의 `documents.geul`을 쓴다. 색인은 이번 실행분과 그 Issuer 디렉터리에 이미 공표된 문서를 모두 담는다(범위를 나눠 실행해도 앞 실행의 이름이 지워지지 않는다).
 - 공표는 `resolve.Dir.Publish`다. 내용이 같으면 새 버전을 만들지 않는다. 도구 커밋이 바뀌면 TRANSFORMED-BY가 바뀌어 새 버전이 된다.
 - 아직 없는 명세는 [SPEC-PROPOSAL.md](SPEC-PROPOSAL.md)에 제안했다.

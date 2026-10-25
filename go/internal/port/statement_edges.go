@@ -10,13 +10,14 @@ import (
 
 // statementEdges builds a STATEMENT on subject for each claim whose predicate,
 // value and rank convert, numbering Edge Ids from *next. Every other claim is
-// counted in rep.Skipped by reason, and every property used as a predicate or
+// counted in rep.Skipped by reason, a date kept as original text in rep.Raw
+// by its conversion reason (claimObject), and every property used as a predicate or
 // a value is added to rep.Properties.
 func statementEdges(next *uint64, subject core.Record, claims []source.Claim, rep *Report) []core.Record {
 	var out []core.Record
 	for _, c := range claims {
 		pred, okPred := entityRef(c.Property)
-		obj, reason := objectRecord(c)
+		obj, reason, raw := claimObject(c)
 		rank, okRank := rankWord(c.Rank)
 		switch {
 		case !okPred:
@@ -27,6 +28,9 @@ func statementEdges(next *uint64, subject core.Record, claims []source.Claim, re
 		if reason != "" {
 			rep.Skipped[reason]++
 			continue
+		}
+		if raw != "" {
+			rep.Raw[raw]++
 		}
 		rep.Properties = append(rep.Properties, propertiesOf(c)...)
 		out = append(out, statementEdge(*next, pred, subject, obj, rank))

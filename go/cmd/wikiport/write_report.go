@@ -11,7 +11,7 @@ import (
 
 // writeReport writes reps to path as TSV (reportLine) after a header line.
 func writeReport(path string, reps []port.Report) error {
-	lines := []string{"id\tlabels\taliases\tstatements\tskipped"}
+	lines := []string{"id\tlabels\taliases\tstatements\tskipped\traw"}
 	for _, r := range reps {
 		lines = append(lines, reportLine(r))
 	}

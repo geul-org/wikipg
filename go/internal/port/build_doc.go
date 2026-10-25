@@ -15,7 +15,7 @@ import (
 // STATEMENT per convertible claim, Edge Ids from 1. The document ID is the
 // number of e's ID. The report counts what was written and skipped.
 func BuildDoc(e source.Entity, issuer []core.Word, p Provenance) ([]byte, Report, error) {
-	rep := Report{ID: e.ID, Skipped: map[string]int{}}
+	rep := Report{ID: e.ID, Skipped: map[string]int{}, Raw: map[string]int{}}
 	_, num, okNum := entityNumber(e.ID)
 	subject, okRef := entityRef(e.ID)
 	if !okNum || !okRef {

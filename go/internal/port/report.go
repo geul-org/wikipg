@@ -4,7 +4,8 @@ package port
 
 // Report tells what one ported document holds and what it left out: counts
 // of LABEL, ALIAS and STATEMENT records, skipped claims by reason (unsupported
-// value type, novalue/somevalue, date precision …) and the properties the
+// value type, novalue/somevalue …), dates kept as original text by
+// conversion reason (Raw) and the properties the
 // document uses as predicates or values, for porting those next.
 type Report struct {
 	ID         string
@@ -12,5 +13,6 @@ type Report struct {
 	Aliases    int
 	Statements int
 	Skipped    map[string]int
+	Raw        map[string]int
 	Properties []string
 }

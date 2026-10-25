@@ -30,6 +30,6 @@ func parseFlags(args []string) (config, error) {
 	if c.From == 0 || c.From > c.To {
 		return config{}, errors.New("wikiport: need 1 <= -from <= -to")
 	}
-	c.Langs = strings.Split(langs, ",")
+	c.Langs = strings.Split(strings.ReplaceAll(langs, " ", ""), ",")
 	return c, nil
 }

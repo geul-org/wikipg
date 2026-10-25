@@ -12,13 +12,19 @@ import (
 )
 
 // writeIndex writes `<root>/.well-known/geul/<issuer>/documents.geul` naming
-// each written document prefix+number (publish.NameIndex).
+// prefix+number for each written document and every document already
+// published under the Issuer (publishedNumbers), so a run over another range
+// does not drop the names of earlier runs (publish.NameIndex).
 func writeIndex(root string, issuer []core.Word, prefix string, nums []uint64) error {
-	b, err := publish.NameIndex(issuer, prefix, nums)
+	dir := filepath.Join(root, ".well-known", "geul", core.FormatID(issuer))
+	published, err := publishedNumbers(dir)
 	if err != nil {
 		return err
 	}
-	dir := filepath.Join(root, ".well-known", "geul", core.FormatID(issuer))
+	b, err := publish.NameIndex(issuer, prefix, append(published, nums...))
+	if err != nil {
+		return err
+	}
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return err
 	}
