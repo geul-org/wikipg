@@ -3,7 +3,7 @@
 package port
 
 // Codes the GEUL library (core) has no constant for. The STATEMENT layout is
-// this porter's proposal (wiki/SPEC-PROPOSAL.md); ALIAS is edge/ALIAS.
+// this porter (wiki/README 값 변환); ALIAS is edge/ALIAS.
 const (
 	codecUTF8NFCTextEven uint8 = 0x42 // Value UTF8-NFC-TEXT (even bytes)
 	codecURIEven         uint8 = 0x44 // Value URI (even bytes)

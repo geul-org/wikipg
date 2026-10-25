@@ -12,7 +12,7 @@ import (
 )
 
 // claimObject returns the object record of c (objectRecord) and the reason it
-// is skipped. Every date is kept (wiki/SPEC-PROPOSAL 날짜 방침): a time
+// is skipped. Every date is kept (wiki/README 값 변환): a time
 // objectRecord cannot convert becomes its original datavalue JSON as
 // UTF8-TEXT, and raw names the conversion reason so the report counts it.
 func claimObject(c source.Claim) (obj core.Record, skip, raw string) {

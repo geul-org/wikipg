@@ -7,7 +7,7 @@ import "fmt"
 // edtfString writes the date of a Gregorian, timezone-0, unbounded Wikidata
 // time as EDTF (ISO 8601-2): day 1952-03-11, month 1952-03, year 1952, decade
 // 195X. Coarser precisions are not mapped yet (how Wikidata centuries map to
-// EDTF unspecified digits is open, wiki/SPEC-PROPOSAL.md). The caller checks
+// EDTF unspecified digits is open). The caller checks
 // calendar, timezone and bounds.
 func edtfString(t wikidataTime) (string, string) {
 	y, m, d, ok := parseCivilDate(t.Time)

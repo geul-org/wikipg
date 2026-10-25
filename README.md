@@ -95,4 +95,21 @@ go run ./cmd/wikiport -root ../.. -from 1 -to 1000 -commit "$(git rev-parse HEAD
 
 - Q 범위를 먼저 옮기고, 그 문서들이 쓴 속성(Predicate, 값이 속성 개체인 것)을 이어서 옮긴 뒤 두 Issuer의 `documents.geul`을 쓴다. 색인은 이번 실행분과 그 Issuer 디렉터리에 이미 공표된 문서를 모두 담는다(범위를 나눠 실행해도 앞 실행의 이름이 지워지지 않는다).
 - 공표는 `resolve.Dir.Publish`다. 내용이 같으면 새 버전을 만들지 않는다. 도구 커밋이 바뀌면 TRANSFORMED-BY가 바뀌어 새 버전이 된다.
-- 아직 없는 명세는 [SPEC-PROPOSAL.md](SPEC-PROPOSAL.md)에 제안했다.
+
+## 값 변환
+
+| 위키데이터 | GEUL |
+|---|---|
+| 항목 `Q…`, 속성 `P…` | WIKIDATA-QID, WIKIDATA-PID Reference |
+| Lexeme `L…`, EntitySchema `E…` | 건너뜀 (Reference Codec 없음) |
+| string, external-id | UTF8-TEXT |
+| time, 그레고리력 일 정밀도(기원전 포함) | GREGORIAN-DATE |
+| time, 그레고리력 월·연·10년 정밀도 | EDTF |
+| time, 율리우스력 일·월·연 정밀도 | GEDCOM-DATE (`JULIAN 14 OCT 1066`) |
+| time, 그 밖(세기 이상 정밀도, 시간대·오차 범위 등) | datavalue JSON 원문을 UTF8-TEXT로. 날짜는 건너뛰지 않는다 |
+| novalue, somevalue | 건너뜀 (DB에 값이 비어 있다) |
+| quantity, monolingualtext, globecoordinate 등 | 건너뜀 (이번 범위 밖) |
+
+- 레이블·별칭은 UTF8-NFC-TEXT, 언어는 LANGUAGE-BCP47-CODE.
+- 클레임은 STATEMENT(Edge Id, Predicate, Subject, Object, Rank). qualifier와 출처는 담지 않는다.
+- TRANSFORMED-BY는 임시로 URI Value + 버전 텍스트다. 용어 정의 문서(문서 ID 0 색인)가 생기면 EXTERNAL-ISSUER로 바꾼다.

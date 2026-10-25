@@ -11,7 +11,7 @@ import (
 // DOC-POINTER(issuer, num, 0), SOURCE twice (the dump URI, then the entity),
 // ACQUIRED-AT (when the dump file was received) and TRANSFORMED-BY for the
 // loader and this porter. TRANSFORMED-BY carries a URI Value and the version
-// as UTF8-TEXT instead of a Reference (wiki/SPEC-PROPOSAL.md). No wall-clock
+// as UTF8-TEXT instead of a Reference (wiki/README 값 변환). No wall-clock
 // time is written, so the same input and porter give the same document.
 func headRecords(issuer []core.Word, num uint64, subject core.Record, p Provenance) ([]core.Record, error) {
 	id, err := core.EncodeDocID(issuer, []core.Word{core.Word(num >> 48), core.Word(num >> 32), core.Word(num >> 16), core.Word(num)})
