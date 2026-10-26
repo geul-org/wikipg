@@ -3,7 +3,7 @@
 package source
 
 // entityQueries is the SQL loadEntityWith runs for one entity ($1 = id, $2 =
-// languages for labels, descriptions and aliases). LoadEntity uses defaultQueries.
+// languages for labels, descriptions and aliases). LoadEntity uses queriesFor.
 type entityQueries struct {
 	Exists       string
 	Labels       string

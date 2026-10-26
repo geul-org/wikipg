@@ -4,7 +4,9 @@
 
 ## 원본 판본
 
-로컬 PostgreSQL(`geuldev`)에 적재한 위키데이터의 판본이다.
+### 이전 판본 (20250908, 삭제)
+
+지금 공표된 문서(2026-10-26 생성)의 원본이다. 이 DB(`geuldev.public`)는 2026-10-26 삭제했다(적재 입력이 소실되어 다시 만들 수 없다). 다음 생성부터는 아래 새 덤프를 쓴다.
 
 | 항목 | 값 |
 |---|---|
@@ -15,9 +17,9 @@
 | 적재 도구 | `github.com/geul-org/geul-entity` `artifacts/wikidata/postgres.go`, 커밋 `4225b3b4297796a79e95c4cda5aa54df3acc4069` |
 | 적재 입력 | `/mnt/d/latest-all.json`(압축을 푼 파일). 지금은 없다(소실). 보관 파일과 같은 덤프로 본다 |
 
-### 새 덤프 (20261019, 적재 전)
+## 새 덤프 (20261019, 적재 전)
 
-다음 적재(wikiload, 스키마 `wikidata`)에 쓸 판본이다. 위 20250908 DB와 달리 판본·해시를 추정하지 않는다.
+wikiload로 geuldev의 스키마 `wikidata`에 적재할 판본이다. 위 20250908 DB와 달리 판본·해시를 추정하지 않는다. 출처 기록은 적재 뒤 `dump` 행에서 읽는다.
 
 | 항목 | 값 |
 |---|---|
@@ -27,14 +29,16 @@
 | SHA-1 | `a05b8b809ab80576da6d838c67138ddf401055e6` (공식 `sha1sums`와 일치) |
 | SHA-256 | `a249a19d12b1b0e8443248da3583090682be3f20c6bdd6ed1f7e1ae05b6b0774` (직접 계산, 같은 폴더 `.sha256`) |
 
-### 판본 판단 근거
+### 0908 판본 판단 근거
 
 - 파일 이름이 `latest-all.json.bz2`라 이름만으로는 판본을 알 수 없다. 덤프 사이트는 최근 판만 남겨 2025년 판의 크기·해시를 대조할 수 없었다.
 - 덤프 앞부분 6,354개 개체의 `modified` 최댓값이 `2025-09-08T03:01:14Z`, `lastrevid` 최댓값이 `2402035052`다. 자주 편집되는 앞쪽 개체가 이 시각에서 멈춘다.
 - DB의 가장 큰 QID는 `Q136198562`이고, 위키데이터 API 기준 첫 판이 `2025-09-10T01:34:49Z`(revid `2403031064`)다. 덤프는 여러 날에 걸쳐 만들어지므로 9월 8일(월)에 시작한 판과 맞는다.
 - 9월 17일에 받았지만 그때 `latest`는 아직 0908 판을 가리키고 있었던 것으로 본다(0915 판은 완성 전).
 
-### 빈칸 (legacy.md의 미상·소실·비공개)
+### 0908 판의 빈칸 (legacy.md의 미상·소실·비공개)
+
+새 스키마(`wikidata.sql`)는 아래 빈칸을 대부분 메운다: 판본·해시(`dump`), 원본 줄(`entity_raw`), qualifier 순서(`ordinal`), novalue·somevalue(`snaktype`), 출처(`reference*`).
 
 | 항목 | 상태 |
 |---|---|
@@ -46,21 +50,21 @@
 | 덤프 판본 | **추정.** 위 근거로 0908 판으로 판단했다 |
 | 원본 해시 | **생략.** DB는 소실된 적재 입력에서 읽었으므로 보관 파일 해시는 DB 내용을 증명하지 못하고, 2025년 판은 덤프 사이트에 없어 대조할 수도 없다 |
 
-## DB 테이블 (`geuldev.public`)
+## DB 테이블 (`geuldev.wikidata`)
 
-| 테이블 | 열 | 대략 행 수 |
-|---|---|---|
-| `entities` | `id`, `type`(item/property), `created_at`(적재 시각) | 1.17억 |
-| `entity_labels` | `entity_id`, `language`, `label` | 7.3억 |
-| `entity_aliases` | `entity_id`, `language`, `alias`, `alias_order` | 1.8억 |
-| `entity_descriptions` | `entity_id`, `language`, `description` | 33억 |
-| `triples` | `id`, `subject`, `property`, `object_value`, `object_type`, `rank` | 17억 |
-| `triple_qualifiers` | `triple_id`, `property`, `value`, `datatype` | 4.3억 |
-| `triple_references` | `triple_id`, `property`, `value`, `source_type` | 0 |
-| `properties_meta` | `property_id`, `datatype`, `label_en`, `description_en`, `usage_count` | 1.3만 |
+정의는 `wikidata.sql`이다. wikiport가 읽는 것:
 
-- `triples.object_value`는 위키데이터 datavalue를 그대로 담는다. 시간 예: `{"time":"+1952-03-11T00:00:00Z","timezone":0,"before":0,"after":0,"precision":11,"calendarmodel":"http://www.wikidata.org/entity/Q1985727"}`.
-- `triples.object_type`에는 datavalue 형식(`wikibase-entityid`, `string`, `quantity`, `monolingualtext`, `time`, `globecoordinate`)과 datatype(`wikibase-item`, `globe-coordinate`)이 섞여 있다.
+| 테이블 | wikiport가 쓰는 열 |
+|---|---|
+| `dump` | `url`, `sha256`, `downloaded_at`, `loader`, `loader_commit` (출처 기록) |
+| `entity` | `entity_id` (있는지) |
+| `label`, `description`, `alias` | `language`, `value` (별칭은 `ordinal` 순) |
+| `statement` | `statement_id`(덤프 순), `property`, `rank`, `value_type`, `value`(jsonb), `value_entity` |
+| `qualifier` | `statement_id`, `ordinal`(qualifiers-order), `property`, `value_type`, `value`, `value_entity` |
+
+- 모든 질의는 `dump_id`로 한 판만 읽는다(`-dump-id`).
+- 값은 개체면 맨 ID(`value_entity`), 문자열이면 따옴표 없는 문자열, 그 밖은 datavalue JSON(jsonb의 공백·키 순서)이다. novalue·somevalue는 빈 값이라 건너뛴다(보고서 `값 없음`).
+- 본 값과 qualifier 값이 같은 형태다(이전 DB는 qualifier 개체만 JSON이었다).
 
 ## 작업 범위 (2026-10-25 결정)
 
@@ -84,11 +88,11 @@
 
 각 문서에 다음을 남긴다.
 
-- 출처: Wikidata 덤프 20250908, 그 항목의 QID
-- 받은 시각: 보관 파일을 받은 시각
-- 원본 해시: 생략(위 빈칸 표). 생략했다는 사실을 기록한다: SOURCE 둘(덤프 URI, 항목 QID)의 다이제스트 자리에 없음 표지 `0x0000`을 쓴다(docs/edge/CODEC 선택 필드)
+- 출처: SOURCE 둘. 덤프 URI + 덤프 파일 SHA-256(`dump.sha256`, SHA-256-DIGEST), 그 항목의 QID + 없음 표지 `0x0000`(항목 단위 다이제스트는 없다, docs/edge/CODEC 선택 필드). 덤프 SHA-256을 모르면 없음 표지
+- 받은 시각: `dump.downloaded_at`
 - 변환 도구: TRANSFORMED-BY 셋(docs/meta/lineage/TRANSFORMED-BY). 도구 Reference는 geul.org URL 정의 Reference 문서(GEUL-ORG), 버전은 전체 커밋 ID(SHA1-DIGEST)다.
-  - 적재 도구 geul-entity(`0x0001000000000003`) `4225b3b4297796a79e95c4cda5aa54df3acc4069`(`artifacts/wikidata/postgres.go`)
+  - 적재 도구 wikiload(wikiport 저장소, `0x0001000000000001`) `dump.loader_commit`. 다른 적재 도구로 채운 dump는 거부한다
+  - (이전 0908 판의 적재 도구 geul-entity `0x0001000000000003` `4225b3b4297796a79e95c4cda5aa54df3acc4069`)
   - 포팅 도구 wikiport(`0x0001000000000001`) `-commit`
   - GEUL 라이브러리 geul-lib(`0x0001000000000002`) `-lib-commit`. wikiport는 `go.mod`의 `replace`로 로컬 라이브러리를 쓰므로 wikiport 커밋만으로는 라이브러리 코드가 정해지지 않는다
 
@@ -96,7 +100,7 @@
 
 ```sh
 cd draft/t002/wiki/go
-# DB 접속은 lib/pq의 PG* 환경변수(PGHOST, PGUSER, PGPASSWORD, PGDATABASE, PGSSLMODE)로 한다.
+# DB 접속은 lib/pq의 PG* 환경변수(PGHOST, PGUSER, PGPASSWORD, PGDATABASE=geuldev, PGSSLMODE)로 한다.
 go run ./cmd/wikiport -root ../.. -from 1 -to 1000 -commit "$(git rev-parse HEAD)" -lib-commit "$(git -C ../../geul rev-parse HEAD)" -report report.tsv
 ```
 
@@ -109,25 +113,27 @@ go run ./cmd/wikiport -root ../.. -from 1 -to 1000 -commit "$(git rev-parse HEAD
 | `-lib-commit` | TRANSFORMED-BY에 남길 GEUL 라이브러리 커밋, 전체 ID (필수) | |
 | `-report` | 개체별 건수·건너뛴 사유·원문 보존 날짜의 사유 TSV (열: id, labels, descriptions, aliases, triples, qualifiers, skipped, raw. qualifier 사유는 `qualifier ` 접두) | 없음 |
 | `-dsn` | PostgreSQL DSN | 비우면 PG* 환경변수 |
+| `-schema` | 적재된 덤프의 스키마(wikiload `-schema`) | `wikidata` |
+| `-dump-id` | 읽을 판(wikiload `-dump-id`) | 1 |
 
 - Q 범위를 먼저 옮기고, 그 문서들이 쓴 속성(Predicate, 값이 속성 개체인 것)을 이어서 옮긴 뒤 두 Issuer의 `documents.geul`을 쓴다. 색인은 이번 실행분과 그 Issuer 디렉터리에 이미 공표된 문서를 모두 담는다(범위를 나눠 실행해도 앞 실행의 이름이 지워지지 않는다).
 - 공표는 개발 기간 동안 `resolve.Dir.Overwrite`다(2026-10-26 결정): 실행할 때마다 v1을 덮어쓰고 버전 목록도 v1 하나만 둔다. 버전을 쌓으면 용량을 감당할 수 없기 때문이다. 내용이 같으면 아무 파일도 바꾸지 않는다. 형식이 안정되면 `Publish`(버전 누적)로 돌아간다.
 
 ## 적재 도구 (`wiki/go`, wikiload)
 
-덤프를 PostgreSQL 스키마 `wikidata`(`wiki/wikidata.sql`)에 적재한다. 기존 `geuldev.public`(geul-entity `postgres.go`)을 대신하며 기존 테이블은 건드리지 않는다. 원칙과 기존 스키마 대비 개선은 `wikidata.sql` 머리말에 있다.
+덤프를 geuldev의 스키마 `wikidata`(`wiki/wikidata.sql`)에 적재한다. 0908 판에서 뽑은 `ko_term`·`lexeme`는 스키마 `wikidata0908`로 옮겼다(2026-10-26). 같은 DB라 stdict 등과 조인할 수 있다. 기존 `geuldev.public`(geul-entity `postgres.go`, 2026-10-26 삭제)을 대신한다. 원칙과 기존 스키마 대비 개선은 `wikidata.sql` 머리말에 있다.
 
 ```sh
 cd draft/t002/wiki/go
 go run ./cmd/wikiload -in /mnt/d/geul/wikidata/wikidata-20261019-all.json.bz2 -commit "$(git rev-parse HEAD)"
 ```
 
-- 스키마: `wikidata.sql`의 1~3절(타입·테이블)만 먼저 실행하고, 4절(재개 정리·출처 중복 정리·제약·색인)은 적재를 마친 뒤 실행한다. 파일 전체를 한 번에 돌리지 않는다.
+- 스키마: `psql -d geuldev -f wikidata.sql`은 1~3절(타입·테이블)만 만든다. 4절(재개 정리·출처 중복 정리·제약·색인)은 주석으로 되어 있고, 적재를 마친 뒤 주석을 풀어 실행한다.
 - 테이블: `dump`(파일·URL·크기·MD5·SHA-1·SHA-256·적재 도구 커밋), `entity_raw`(덤프 줄 원문), `load_error`, `entity`, `label`, `description`, `alias`, `sitelink`, `statement`, `qualifier`, `reference`, `statement_reference`, `reference_snak`. 개체 단위 테이블은 모두 `dump_id`를 가진다.
 - 기본값은 기계를 30% 남긴다: CPU 70% 중 1/5 압축 해제(lbzip2), 2/5 JSON 파싱, 작성자(DB 연결) 4, 배치 8 MiB(메모리 약 1 GB). 2026-10-26 측정에서 작성자 4·8 MiB가 가장 빨랐다.
 - 체크포인트에서 이어 읽는다(`-from-line 0`). 언어는 `-langs`(기본 `ko,en`, `all`은 전부).
 - 플래그 전체: `go run ./cmd/wikiload -h`.
-- wikiport는 아직 `geuldev.public`을 읽는다. 새 스키마를 읽게 바꾸는 일은 적재 뒤에 한다.
+- wikiport는 이 스키마를 읽는다(2026-10-26 전환). 테스트는 `testdata/fixture.sql`을 임시 스키마에 넣어 돌린다.
 
 ## 값 변환
 

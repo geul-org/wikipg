@@ -14,11 +14,11 @@ func TestQualifierEdges(t *testing.T) {
 	next := uint64(10)
 	rs := qualifierEdges(&next, 9, []source.Qualifier{
 		{Property: "P580", Type: "time", Value: `{"time":"+1971-00-00T00:00:00Z","timezone":0,"before":0,"after":0,"precision":9,"calendarmodel":"` + gregorian + `"}`},
-		{Property: "P512", Type: "wikibase-entityid", Value: `{"entity-type":"item","id":"Q1765120"}`},
+		{Property: "P512", Type: "wikibase-entityid", Value: "Q1765120"},
 		{Property: "X1", Type: "string", Value: "a"},
 		{Property: "P1114", Type: "quantity", Value: "{}"},
 		{Property: "P585", Type: "time", Value: "x"},
-		{Property: "P642", Type: "wikibase-entityid", Value: `{"id":"P31"}`},
+		{Property: "P642", Type: "wikibase-entityid", Value: "P31"},
 	}, &rep)
 	if len(rs) != 4 || next != 14 || rep.Qualifiers != 4 || rs[0].Payload[1] != 10 || rs[3].Payload[1] != 13 {
 		t.Fatalf("got %d next %d %+v", len(rs), next, rep)

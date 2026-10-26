@@ -1,5 +1,5 @@
 //ff:func feature=port type=encoder control=iteration dimension=1
-//ff:what TestHeadRecords — SPEC-VERSION, DOC-ID, two SOURCE (digest left out), ACQUIRED-AT and one TRANSFORMED-BY per tool in order; a bad Issuer or commit fails
+//ff:what TestHeadRecords — SPEC-VERSION, DOC-ID, two SOURCE (dump digest or left out, entity left out), ACQUIRED-AT and one TRANSFORMED-BY per tool in order; a bad Issuer or commit fails
 package port
 
 import (
@@ -32,6 +32,15 @@ func TestHeadRecords(t *testing.T) {
 	}
 	if _, err := headRecords([]core.Word{0, 1}, 42, subj, prov()); err == nil {
 		t.Fatal("non-canonical Issuer: want error")
+	}
+	withSum := prov()
+	withSum.DumpSHA256 = strings.Repeat("ab", 32)
+	if rs, err := headRecords([]core.Word{1, 0}, 42, subj, withSum); err != nil || rs[2].Payload[len(rs[2].Payload)-16] != 0xabab {
+		t.Fatalf("dump digest: %v", err)
+	}
+	withSum.DumpSHA256 = "ab"
+	if _, err := headRecords([]core.Word{1, 0}, 42, subj, withSum); err == nil {
+		t.Fatal("short dump digest: want error")
 	}
 	bad := prov()
 	bad.Tools[1].Commit = strings.Repeat("2", 7)

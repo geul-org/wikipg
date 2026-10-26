@@ -1,20 +1,21 @@
 //ff:func feature=source type=loader control=sequence
-//ff:what TestLoadClaims — Q42's triples in ID order; a closed handle and a query with the wrong columns error
+//ff:what TestLoadClaims — Q42's statements in dump order with bare entity IDs, unquoted strings and empty novalue; a closed handle and wrong columns error
 package source
 
 import "testing"
 
 func TestLoadClaims(t *testing.T) {
-	db := openDB(t)
-	q := "SELECT id, property, object_type, coalesce(object_value, ''), coalesce(rank, '') FROM triples WHERE subject = $1 ORDER BY id"
+	db, s := fixtureDB(t)
+	q := queriesFor(s).Claims
 	cs, err := loadClaims(db, q, "Q42")
-	if err != nil || len(cs) < 100 || cs[0].ID >= cs[1].ID || cs[0].Property == "" || cs[0].Rank == "" {
-		t.Fatalf("got %d claims %v", len(cs), err)
+	if err != nil || len(cs) != 6 || cs[0].ID != 4201 || cs[0].Value != "Q5" || cs[0].Type != "wikibase-entityid" || cs[0].Rank != "preferred" ||
+		cs[3].Value != "113230702" || cs[4].Value != "" || cs[4].Type != "" || cs[1].Value[0] != '{' {
+		t.Fatalf("got %+v %v", cs, err)
 	}
 	if _, err := loadClaims(closedDB(t), q, "Q42"); err == nil {
 		t.Fatal("closed: want error")
 	}
-	if _, err := loadClaims(db, "SELECT id FROM triples WHERE subject = $1", "Q42"); err == nil {
+	if _, err := loadClaims(db, "SELECT statement_id FROM "+s.Schema+".statement WHERE entity_id = $1", "Q42"); err == nil {
 		t.Fatal("one column: want scan error")
 	}
 }

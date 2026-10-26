@@ -1,7 +1,9 @@
 -- wikidata.sql — 위키데이터 JSON 덤프 적재 스키마 (geuldev, PostgreSQL 16)
 --
 -- 2026-10-26. 기존 geuldev.public 스키마(geul-entity artifacts/wikidata/postgres.go,
--- 커밋 4225b3b)를 대신한다. 기존 테이블은 건드리지 않도록 별도 스키마 `wikidata`에 둔다.
+-- 커밋 4225b3b, 2026-10-26 삭제)를 대신한다. geuldev의 스키마 `wikidata`에 둔다. 같은 DB의
+-- 다른 자료(stdict 등)와 조인할 수 있다. 다른 스키마에 넣으려면 아래 두 줄을 바꾸고 도구에
+-- `-schema`를 준다.
 --
 -- 원칙
 --   1. 원본을 먼저 보존한다. 개체마다 덤프의 JSON 한 줄을 그대로(raw) 저장하고,

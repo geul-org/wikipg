@@ -1,15 +1,14 @@
 //ff:type feature=source type=model
-//ff:what Qualifier — one Wikidata qualifier snak as loaded into triple_qualifiers: claim, property, datatype, value
+//ff:what Qualifier — one Wikidata qualifier snak of a loaded dump: statement, property, value type, value
 package source
 
-// Qualifier is one row of geuldev.public.triple_qualifiers: the claim
-// (triple ID) it qualifies, its property, the loader's datatype (time,
-// wikibase-entityid, string, quantity, …) and the value as the loader stored
-// it. Unlike a claim's entity value, an entity qualifier value is the
-// datavalue JSON object ({"entity-type":…,"id":"Q5"}).
+// Qualifier is one qualifier snak of a loaded dump (wiki/wikidata.sql
+// qualifier): the statement_id it qualifies, its property, the datavalue type
+// and the value in the same form as a Claim's (an entity is a bare ID; empty
+// for novalue and somevalue).
 type Qualifier struct {
-	TripleID int64
-	Property string
-	Type     string
-	Value    string
+	StatementID int64
+	Property    string
+	Type        string
+	Value       string
 }

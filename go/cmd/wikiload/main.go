@@ -1,5 +1,5 @@
 //ff:func feature=cli type=command control=sequence
-//ff:what main — wikiload entry: loads a Wikidata JSON dump into the wikidata schema of geuldev
+//ff:what main — wikiload entry: loads a Wikidata JSON dump into the wikidata schema of geuldev (wiki/wikidata.sql)
 package main
 
 import (

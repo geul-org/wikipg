@@ -10,18 +10,21 @@ import (
 
 	"github.com/geul-org/geul/go/pkg/core"
 	"github.com/geul-org/geul/go/pkg/resolve"
+
+	"github.com/geul-org/wikiport/go/internal/source"
 )
 
 func TestPortIDs(t *testing.T) {
-	db := openDB(t)
-	c := config{Langs: []string{"en"}, Commit: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", LibCommit: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}
-	reps, written, err := portIDs(db, resolve.Dir{Root: t.TempDir()}, "Q", []uint64{1, 6}, []core.Word{1, 0}, c)
+	db, schema := fixtureDB(t)
+	c := config{Langs: []string{"en"}, Commit: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", LibCommit: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", Schema: schema, Dump: 1}
+	prov, _ := provenanceOf(source.Dump{URL: "u", Loader: wikiloadPath, LoaderCommit: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}, c.Commit, c.LibCommit)
+	reps, written, err := portIDs(db, resolve.Dir{Root: t.TempDir()}, "Q", []uint64{1, 6}, []core.Word{1, 0}, c, prov)
 	if err != nil || len(reps) != 2 || !slices.Equal(written, []uint64{1}) {
 		t.Fatalf("got %d %v %v", len(reps), written, err)
 	}
 	blocked := filepath.Join(t.TempDir(), "blocked")
 	os.WriteFile(blocked, nil, 0o644)
-	if _, _, err := portIDs(db, resolve.Dir{Root: blocked}, "Q", []uint64{1}, []core.Word{1, 0}, c); err == nil {
+	if _, _, err := portIDs(db, resolve.Dir{Root: blocked}, "Q", []uint64{1}, []core.Word{1, 0}, c, prov); err == nil {
 		t.Fatal("unwritable: want error")
 	}
 }

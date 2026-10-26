@@ -12,16 +12,16 @@ import (
 	"github.com/geul-org/wikiport/go/internal/source"
 )
 
-// portOne ports entity id: loads it (source.LoadEntity), builds its document
-// under issuer (port.BuildDoc) and stores it in dir as version 1 over any
+// portOne ports entity id: loads it from c's dump (source.LoadEntity), builds
+// its document under issuer with prov (port.BuildDoc) and stores it in dir as version 1 over any
 // earlier one (resolve.Dir.Overwrite: development, no version per run). It is
-// false when the entity is not in the database.
-func portOne(db *sql.DB, dir resolve.Dir, id string, issuer []core.Word, c config) (port.Report, bool, error) {
-	e, ok, err := source.LoadEntity(db, id, c.Langs)
+// false when the entity is not in the dump.
+func portOne(db *sql.DB, dir resolve.Dir, id string, issuer []core.Word, c config, prov port.Provenance) (port.Report, bool, error) {
+	e, ok, err := source.LoadEntity(db, source.Store{Schema: c.Schema, Dump: c.Dump}, id, c.Langs)
 	if err != nil || !ok {
 		return port.Report{ID: id}, false, err
 	}
-	b, rep, err := port.BuildDoc(e, issuer, provenanceOf(c.Commit, c.LibCommit))
+	b, rep, err := port.BuildDoc(e, issuer, prov)
 	if err != nil {
 		return rep, false, err
 	}

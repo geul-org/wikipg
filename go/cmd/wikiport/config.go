@@ -1,18 +1,21 @@
 //ff:type feature=cli type=model
-//ff:what config — the wikiport run settings: tree root, QID range, languages, DB DSN, porter and library commits, report path
+//ff:what config — the wikiport run settings: tree root, QID range, languages, DB DSN, loaded dump, porter and library commits, report path
 package main
 
 // config is one wikiport run: the t002 root whose .well-known/geul receives
-// the documents, the QID range [From, To], the label/alias languages, the
-// PostgreSQL DSN (empty: lib/pq reads the PG* environment variables), the
-// porter and GEUL library commits recorded in TRANSFORMED-BY and where the
-// report goes.
+// the documents, the QID range [From, To], the label/description/alias
+// languages, the PostgreSQL DSN (empty: lib/pq reads the PG* environment
+// variables), the loaded dump to read (schema and dump_id, wiki/wikidata.sql),
+// the porter and GEUL library commits recorded in TRANSFORMED-BY and where
+// the report goes.
 type config struct {
 	Root      string
 	From      uint64
 	To        uint64
 	Langs     []string
 	DSN       string
+	Schema    string
+	Dump      int16
 	Commit    string
 	LibCommit string
 	Report    string

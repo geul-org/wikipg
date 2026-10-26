@@ -8,8 +8,9 @@ import (
 
 // headRecords writes the HEAD of the document for entity subject (its
 // Reference) numbered num under issuer: SPEC-VERSION, DOC-ID
-// DOC-POINTER(issuer, num, 0), SOURCE twice (the dump URI, then the entity,
-// each with its digest field left out as the Absent record),
+// DOC-POINTER(issuer, num, 0), SOURCE twice (the dump URI with the file's
+// SHA-256 (fileDigest), then the entity with its digest left out as the
+// Absent record),
 // ACQUIRED-AT (when the dump file was received) and one TRANSFORMED-BY per
 // tool in p.Tools: the tool's Reference (toolRef) and its commit
 // (CommitDigest). A malformed commit is an error. No wall-clock time is
@@ -20,10 +21,14 @@ func headRecords(issuer []core.Word, num uint64, subject core.Record, p Provenan
 		return nil, err
 	}
 	absent := core.Record{Kind: core.KindReference}
+	dump, err := fileDigest(p.DumpSHA256)
+	if err != nil {
+		return nil, err
+	}
 	rs := []core.Record{
 		core.EncodeSpecVersion(core.SpecVersion),
 		id,
-		compose(core.KindMeta, metaSource, core.EncodeBytesValue(codecURIEven, []byte(p.DumpURI)), absent),
+		compose(core.KindMeta, metaSource, core.EncodeBytesValue(codecURIEven, []byte(p.DumpURI)), dump),
 		compose(core.KindMeta, metaSource, subject, absent),
 		compose(core.KindMeta, metaAcquiredAt, core.EncodePosixSeconds(p.AcquiredAt)),
 	}

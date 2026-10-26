@@ -1,18 +1,24 @@
 //ff:func feature=cli type=helper control=sequence
-//ff:what TestProvenanceOf — the 20250908 dump, its acquisition time, the loader at 4225b3b, the porter and the library at the given commits
+//ff:what TestProvenanceOf — the dump's URL and download time, wikiload, the porter and the library at their commits; another loader fails
 package main
 
 import (
-	"strings"
 	"testing"
+	"time"
 
 	"github.com/geul-org/wikiport/go/internal/port"
+	"github.com/geul-org/wikiport/go/internal/source"
 )
 
 func TestProvenanceOf(t *testing.T) {
-	p := provenanceOf("abc", "def")
-	if !strings.Contains(p.DumpURI, "20250908") || p.AcquiredAt != 1758109791 || len(p.Tools) != 3 ||
-		p.Tools[0] != (port.Tool{Doc: 3, Commit: "4225b3b4297796a79e95c4cda5aa54df3acc4069"}) || p.Tools[1] != (port.Tool{Doc: 1, Commit: "abc"}) || p.Tools[2] != (port.Tool{Doc: 2, Commit: "def"}) {
-		t.Fatalf("got %+v", p)
+	d := source.Dump{URL: "u", SHA256: "s", DownloadedAt: time.Unix(5, 0), Loader: wikiloadPath, LoaderCommit: "l"}
+	p, err := provenanceOf(d, "abc", "def")
+	if err != nil || p.DumpURI != "u" || p.DumpSHA256 != "s" || p.AcquiredAt != 5 || len(p.Tools) != 3 ||
+		p.Tools[0] != (port.Tool{Doc: 1, Commit: "l"}) || p.Tools[1] != (port.Tool{Doc: 1, Commit: "abc"}) || p.Tools[2] != (port.Tool{Doc: 2, Commit: "def"}) {
+		t.Fatalf("got %+v %v", p, err)
+	}
+	d.Loader = "github.com/geul-org/geul-entity/artifacts/wikidata"
+	if _, err := provenanceOf(d, "abc", "def"); err == nil {
+		t.Fatal("other loader: want error")
 	}
 }

@@ -19,7 +19,7 @@ func TestBuildDoc(t *testing.T) {
 		Descriptions: []source.Text{{Lang: "en", Value: "English writer"}},
 		Aliases:      []source.Text{{Lang: "en", Value: "DNA"}},
 		Claims: []source.Claim{
-			{Property: "P31", Type: "wikibase-entityid", Value: "Q5", Rank: "normal", Qualifiers: []source.Qualifier{{Property: "P642", Type: "wikibase-entityid", Value: `{"id":"Q1"}`}}},
+			{Property: "P31", Type: "wikibase-entityid", Value: "Q5", Rank: "normal", Qualifiers: []source.Qualifier{{Property: "P642", Type: "wikibase-entityid", Value: "Q1"}}},
 			{Property: "P2", Type: "quantity", Rank: "normal", Value: "{}"},
 		},
 	}

@@ -13,15 +13,15 @@ import (
 	"github.com/geul-org/wikiport/go/internal/port"
 )
 
-// portIDs ports prefix+n for each n under issuer. It returns the reports of
+// portIDs ports prefix+n for each n under issuer with prov (portOne). It returns the reports of
 // all IDs (missing ones too, with no counts) and the numbers of the
 // documents written. The first error stops it.
-func portIDs(db *sql.DB, dir resolve.Dir, prefix string, nums []uint64, issuer []core.Word, c config) ([]port.Report, []uint64, error) {
+func portIDs(db *sql.DB, dir resolve.Dir, prefix string, nums []uint64, issuer []core.Word, c config, prov port.Provenance) ([]port.Report, []uint64, error) {
 	var reps []port.Report
 	var written []uint64
 	for _, n := range nums {
 		id := prefix + strconv.FormatUint(n, 10)
-		rep, ok, err := portOne(db, dir, id, issuer, c)
+		rep, ok, err := portOne(db, dir, id, issuer, c, prov)
 		if err != nil {
 			return reps, written, fmt.Errorf("%s: %w", id, err)
 		}

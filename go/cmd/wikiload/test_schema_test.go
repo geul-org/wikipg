@@ -1,5 +1,5 @@
 //ff:func feature=cli type=command control=sequence
-//ff:what testSchema — a throwaway copy of the wikidata schema in geuldev, dropped after the test; skips when geuldev is not reachable
+//ff:what testSchema — a throwaway schema of wiki/wikidata.sql, dropped after the test; skips when the database is not reachable
 package main
 
 import (
@@ -13,9 +13,9 @@ import (
 	_ "github.com/lib/pq"
 )
 
-// testSchema opens geuldev through lib/pq's PG* environment variables, runs
-// sections 1–3 of wiki/wikidata.sql under a fresh schema name (wikidata is
-// replaced) and drops that schema when the test ends. It skips the test when
+// testSchema opens the database of lib/pq's PG* environment variables, runs
+// sections 1–3 of wiki/wikidata.sql under a fresh schema (the schema wikidata
+// is replaced) and drops that schema when the test ends. It skips the test when
 // the database is not reachable.
 func testSchema(t *testing.T) (*sql.DB, string) {
 	t.Helper()
@@ -24,7 +24,7 @@ func testSchema(t *testing.T) (*sql.DB, string) {
 		err = db.Ping()
 	}
 	if err != nil {
-		t.Skipf("geuldev not reachable: %v", err)
+		t.Skipf("database not reachable: %v", err)
 	}
 	t.Cleanup(func() { db.Close() })
 	b, err := os.ReadFile("../../../wikidata.sql")
@@ -32,7 +32,7 @@ func testSchema(t *testing.T) (*sql.DB, string) {
 		t.Fatal(err)
 	}
 	name := fmt.Sprintf("wikidata_test_%d", time.Now().UnixNano())
-	ddl := strings.ReplaceAll(string(b), "CREATE SCHEMA IF NOT EXISTS wikidata;\nSET search_path = wikidata;", "CREATE SCHEMA "+name+";\nSET search_path = "+name+";")
+	ddl := strings.Replace(string(b), "CREATE SCHEMA IF NOT EXISTS wikidata;\nSET search_path = wikidata;", "CREATE SCHEMA "+name+";\nSET search_path = "+name+";", 1)
 	if _, err := db.Exec(ddl); err != nil {
 		t.Fatal(err)
 	}

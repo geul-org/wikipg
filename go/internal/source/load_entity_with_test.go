@@ -5,13 +5,13 @@ package source
 import "testing"
 
 func TestLoadEntityWith(t *testing.T) {
-	db := openDB(t)
-	q := defaultQueries()
+	db, st := fixtureDB(t)
+	q := queriesFor(st)
 	if e, ok, err := loadEntityWith(db, q, "Q42", []string{"en"}); err != nil || !ok || len(e.Labels) != 1 || len(e.Descriptions) != 1 {
 		t.Fatalf("Q42: %v %v", ok, err)
 	}
-	if _, ok, err := loadEntityWith(db, q, "Q0", []string{"en"}); ok || err != nil {
-		t.Fatalf("Q0: %v %v", ok, err)
+	if _, ok, err := loadEntityWith(db, q, "Q6", []string{"en"}); ok || err != nil {
+		t.Fatalf("Q6: %v %v", ok, err)
 	}
 	bad := "SELECT nope FROM nowhere"
 	for i, b := range []entityQueries{
