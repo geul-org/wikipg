@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/geul-org/geul-dev/wiki/go/internal/load"
+	"github.com/geul-org/wikiport/go/internal/load"
 )
 
 func TestEndLoad(t *testing.T) {

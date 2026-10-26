@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"strings"
 
-	"github.com/geul-org/geul-dev/wiki/go/internal/source"
+	"github.com/geul-org/wikiport/go/internal/source"
 )
 
 // qualifierClaim returns q as a claim (property, type and value) so the value

@@ -5,7 +5,7 @@ package main
 import (
 	"database/sql"
 
-	"github.com/geul-org/geul-dev/wiki/go/internal/load"
+	"github.com/geul-org/wikiport/go/internal/load"
 )
 
 // startLine decides the first line to read and the counts to continue from.

@@ -3,8 +3,8 @@
 package main
 
 import (
-	"github.com/geul-org/geul-dev/wiki/go/internal/dump"
-	"github.com/geul-org/geul-dev/wiki/go/internal/load"
+	"github.com/geul-org/wikiport/go/internal/dump"
+	"github.com/geul-org/wikiport/go/internal/load"
 )
 
 // buildRows decodes each line of b (dump.DecodeEntity) and adds its rows

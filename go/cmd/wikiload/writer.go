@@ -5,7 +5,7 @@ package main
 import (
 	"database/sql"
 
-	"github.com/geul-org/geul-dev/wiki/go/internal/load"
+	"github.com/geul-org/wikiport/go/internal/load"
 )
 
 // writer writes every parsed batch from in in one transaction

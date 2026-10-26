@@ -5,7 +5,7 @@ package load
 import (
 	"testing"
 
-	"github.com/geul-org/geul-dev/wiki/go/internal/dump"
+	"github.com/geul-org/wikiport/go/internal/dump"
 )
 
 func TestRowsAddEntity(t *testing.T) {

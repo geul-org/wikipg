@@ -6,7 +6,7 @@ import (
 	"database/sql"
 	"sync"
 
-	"github.com/geul-org/geul-dev/wiki/go/internal/load"
+	"github.com/geul-org/wikiport/go/internal/load"
 )
 
 // startPipeline starts c.Parsers parsers on batches and c.Writers writers on

@@ -5,7 +5,7 @@ package load
 import (
 	"encoding/json"
 
-	"github.com/geul-org/geul-dev/wiki/go/internal/dump"
+	"github.com/geul-org/wikiport/go/internal/dump"
 )
 
 // sampleEntity returns item Q42 as DecodeEntity gives it: labels and

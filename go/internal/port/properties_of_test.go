@@ -6,7 +6,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/geul-org/geul-dev/wiki/go/internal/source"
+	"github.com/geul-org/wikiport/go/internal/source"
 )
 
 func TestPropertiesOf(t *testing.T) {

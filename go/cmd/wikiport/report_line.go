@@ -5,7 +5,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/geul-org/geul-dev/wiki/go/internal/port"
+	"github.com/geul-org/wikiport/go/internal/port"
 )
 
 // reportLine formats r as ID, labels, descriptions, aliases, triples, qualifiers and the skipped

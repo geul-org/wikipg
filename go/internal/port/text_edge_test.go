@@ -8,7 +8,7 @@ import (
 
 	"github.com/geul-org/geul/go/pkg/core"
 
-	"github.com/geul-org/geul-dev/wiki/go/internal/source"
+	"github.com/geul-org/wikiport/go/internal/source"
 )
 
 func TestTextEdge(t *testing.T) {

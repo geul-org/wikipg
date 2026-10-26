@@ -9,7 +9,7 @@ import (
 	"github.com/geul-org/geul/go/pkg/inspect"
 	"github.com/geul-org/geul/go/pkg/schema"
 
-	"github.com/geul-org/geul-dev/wiki/go/internal/source"
+	"github.com/geul-org/wikiport/go/internal/source"
 )
 
 func TestBuildDoc(t *testing.T) {

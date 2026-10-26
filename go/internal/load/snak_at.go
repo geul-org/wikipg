@@ -2,7 +2,7 @@
 //ff:what snakAt — a qualifier or reference snak with its place: overall ordinal and ordinal within its property
 package load
 
-import "github.com/geul-org/geul-dev/wiki/go/internal/dump"
+import "github.com/geul-org/wikiport/go/internal/dump"
 
 // snakAt is one snak of a qualifier or reference set with its overall
 // position (Ordinal) and its position among snaks of the same property

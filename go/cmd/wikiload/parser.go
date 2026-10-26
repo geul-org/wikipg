@@ -2,7 +2,7 @@
 //ff:what parser — turns batches into rows (CPU work) and hands them to the writers
 package main
 
-import "github.com/geul-org/geul-dev/wiki/go/internal/load"
+import "github.com/geul-org/wikiport/go/internal/load"
 
 // parser builds the rows of every batch from in (buildRows: JSON decoding and
 // row building, the CPU-heavy part) and sends them to out for a writer.

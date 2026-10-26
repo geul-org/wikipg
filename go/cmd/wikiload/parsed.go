@@ -2,7 +2,7 @@
 //ff:what parsed — a batch turned into rows by a parser, waiting for a writer
 package main
 
-import "github.com/geul-org/geul-dev/wiki/go/internal/load"
+import "github.com/geul-org/wikiport/go/internal/load"
 
 // parsed is batch Seq (ending at line Last) after a parser built its rows:
 // the rows and the number of entities, for a writer to commit.

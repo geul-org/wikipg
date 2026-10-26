@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/geul-org/geul-dev/wiki/go/internal/load"
+	"github.com/geul-org/wikiport/go/internal/load"
 )
 
 func TestCollect(t *testing.T) {

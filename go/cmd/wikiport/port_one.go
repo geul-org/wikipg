@@ -8,8 +8,8 @@ import (
 	"github.com/geul-org/geul/go/pkg/core"
 	"github.com/geul-org/geul/go/pkg/resolve"
 
-	"github.com/geul-org/geul-dev/wiki/go/internal/port"
-	"github.com/geul-org/geul-dev/wiki/go/internal/source"
+	"github.com/geul-org/wikiport/go/internal/port"
+	"github.com/geul-org/wikiport/go/internal/source"
 )
 
 // portOne ports entity id: loads it (source.LoadEntity), builds its document

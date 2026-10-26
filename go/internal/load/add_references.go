@@ -2,7 +2,7 @@
 //ff:what Rows.addReferences — a statement's reference links in order, and each source's snaks the first time its hash is seen
 package load
 
-import "github.com/geul-org/geul-dev/wiki/go/internal/dump"
+import "github.com/geul-org/wikiport/go/internal/dump"
 
 // addReferences links statement sid to each of its references in order
 // (statement_reference). A source whose hash refs has not seen gets its

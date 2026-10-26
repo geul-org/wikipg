@@ -5,7 +5,7 @@ package load
 import (
 	"bytes"
 
-	"github.com/geul-org/geul-dev/wiki/go/internal/dump"
+	"github.com/geul-org/wikiport/go/internal/dump"
 )
 
 // snakValues returns the snak columns (snaktype, datatype, value_type,

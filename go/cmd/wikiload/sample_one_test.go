@@ -2,7 +2,7 @@
 //ff:what sampleOne — a minimal decoded item Q1 with one English label
 package main
 
-import "github.com/geul-org/geul-dev/wiki/go/internal/dump"
+import "github.com/geul-org/wikiport/go/internal/dump"
 
 // sampleOne returns item Q1 with an English label, for writer tests.
 func sampleOne() dump.Entity {

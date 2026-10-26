@@ -18,7 +18,7 @@ import (
 // row must say which bytes were loaded.
 func dumpInfoOf(c *loadConfig, date, published string) error {
 	d := &c.Dump
-	d.Loader = "github.com/geul-org/geul-dev/draft/t002/wiki/go/cmd/wikiload"
+	d.Loader = "github.com/geul-org/wikiport/go/cmd/wikiload"
 	d.FileName = filepath.Base(c.In)
 	if date == "" {
 		if m := regexp.MustCompile(`wikidata-(\d{8})-`).FindStringSubmatch(d.FileName); m != nil {

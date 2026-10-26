@@ -5,7 +5,7 @@ package load
 import (
 	"slices"
 
-	"github.com/geul-org/geul-dev/wiki/go/internal/dump"
+	"github.com/geul-org/wikiport/go/internal/dump"
 )
 
 // addStatements adds every statement of e: properties in sorted order (so

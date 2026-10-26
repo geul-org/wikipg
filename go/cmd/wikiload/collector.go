@@ -6,7 +6,7 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/geul-org/geul-dev/wiki/go/internal/load"
+	"github.com/geul-org/wikiport/go/internal/load"
 )
 
 // collector holds what collect keeps between results: the database and

@@ -5,7 +5,7 @@ package load
 import (
 	"github.com/lib/pq"
 
-	"github.com/geul-org/geul-dev/wiki/go/internal/dump"
+	"github.com/geul-org/wikiport/go/internal/dump"
 )
 
 // addSitelinks adds a sitelink row for each site of e: site, page title and

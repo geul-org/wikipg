@@ -2,7 +2,7 @@
 //ff:what takeLine — adds a dump line to the batch when it is an entity line at or after the start; 1 when taken
 package main
 
-import "github.com/geul-org/geul-dev/wiki/go/internal/dump"
+import "github.com/geul-org/wikiport/go/internal/dump"
 
 // takeLine adds raw, dump line number line, to b when it holds an entity
 // (dump.TrimLine) and line is at or after from, and returns 1 then, else 0.

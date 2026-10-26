@@ -12,7 +12,7 @@ import (
 
 	_ "github.com/lib/pq"
 
-	"github.com/geul-org/geul-dev/wiki/go/internal/load"
+	"github.com/geul-org/wikiport/go/internal/load"
 )
 
 // runLoad loads the dump c.In into c.Schema: it writes the dump row

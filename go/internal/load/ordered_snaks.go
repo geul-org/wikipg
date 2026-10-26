@@ -6,7 +6,7 @@ import (
 	"slices"
 	"sort"
 
-	"github.com/geul-org/geul-dev/wiki/go/internal/dump"
+	"github.com/geul-org/wikiport/go/internal/dump"
 )
 
 // orderedSnaks lays out the snaks of m (by property) as the dump orders

@@ -9,7 +9,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/geul-org/geul-dev/wiki/go/internal/load"
+	"github.com/geul-org/wikiport/go/internal/load"
 )
 
 // collect reads results until every writer is done (collector.step: counts,

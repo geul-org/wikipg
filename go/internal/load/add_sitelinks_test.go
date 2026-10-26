@@ -6,7 +6,7 @@ import (
 	"database/sql/driver"
 	"testing"
 
-	"github.com/geul-org/geul-dev/wiki/go/internal/dump"
+	"github.com/geul-org/wikiport/go/internal/dump"
 )
 
 func TestRowsAddSitelinks(t *testing.T) {
