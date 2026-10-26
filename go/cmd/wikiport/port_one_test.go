@@ -22,7 +22,7 @@ func TestPortOne(t *testing.T) {
 	if err != nil || !ok || rep.Triples == 0 || rep.Qualifiers == 0 {
 		t.Fatalf("Q42: %+v %v %v", rep, ok, err)
 	}
-	if _, err := os.Stat(filepath.Join(root, ".well-known/geul/0x00010000/0x000000000000002a/0x00000001.geul")); err != nil {
+	if _, err := os.Stat(filepath.Join(root, ".well-known/geul/0x00010000/0x510000000000002a/0x00000001.geul")); err != nil {
 		t.Fatal(err)
 	}
 	if _, ok, err := portOne(db, resolve.Dir{Root: root}, "Q6", []core.Word{1, 0}, c, prov); ok || err != nil {

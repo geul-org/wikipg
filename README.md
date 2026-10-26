@@ -69,14 +69,19 @@ wikiload로 geuldev의 스키마 `wikidata`에 적재할 판본이다. 위 20250
 ## 작업 범위 (2026-10-25 결정)
 
 - **도구:** Go만 쓴다. DB에서 읽어 라이브러리 `core`로 인코딩하고 `resolve.Publish`로 공표한다. Python은 쓰지 않는다.
-- **Issuer:**
+- **Issuer:** `wikidata.geul.org` = `0x00010000` 하나(2026-10-26 결정). 위키데이터의 모든 개체 종류를 한 Issuer 아래 둔다. Issuer는 공표 주체이고, Q·P·L은 같은 출처를 같은 주체가 옮긴 것이라 나누지 않는다(geul.org도 Issuer `0x0000` 하나 안에서 문서 ID 영역으로 나눈다).
+- **문서 ID:** 64비트 중 맨 위 바이트가 개체 종류의 ASCII 글자, 아래 56비트가 번호다(`port.DocNumber`).
 
-  | 이름 | Issuer ID | 대상 |
+  | 종류 | 맨 위 바이트 | 예 |
   |---|---|---|
-  | `wikidata-qid.geul.org` | `0x00010000` | 항목(Q) |
-  | `wikidata-pid.geul.org` | `0x00010001` | 속성(P) |
+  | 항목 Q | `0x51` | Q42 → `0x510000000000002a` |
+  | 속성 P | `0x50` | P31 → `0x500000000000001f` |
+  | Lexeme L | `0x4C` | L42 → `0x4c0000000000002a`. Form·Sense는 그 Lexeme 문서의 LOCAL. 문서 생성·변환은 Lexeme 덤프를 다룰 때 |
+  | Entity Schema E | `0x45` | E10 → `0x450000000000000a` (같은 시점) |
 
-- **문서 ID:** QID·PID의 숫자 부분과 같다(Q42 → `0x000000000000002a`). Issuer가 나뉘어 Q와 P의 같은 숫자가 겹치지 않는다.
+  - hex만 보고 종류를 읽을 수 있다. 번호는 2^56(약 7경)까지이고, 넘는 번호는 오류로 막는다. 맨 위 바이트에 0을 두는 낭비 없이 종류 한 바이트만 쓴다(2026-10-26).
+  - 이름 색인 `documents.geul`은 하나이고 이름은 소문자 종류 글자 + 번호다(`q42`, `p31`).
+  - Q·P를 가리키는 Reference(WIKIDATA-QID·PID)는 문서 위치와 상관없다. 바뀐 것은 문서가 놓이는 주소뿐이다.
 - **문서 단위:** QID 하나당 `.geul` 문서 하나.
 - **대상:** 우선 Q1 ~ Q1000. PID는 필요한 만큼 추가한다.
 - **레코드:** LABEL, DESCRIPTION, ALIAS, TRIPLE과 그 QUALIFIER를 작성한다(이 순서).

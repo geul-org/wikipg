@@ -1,5 +1,5 @@
 //ff:func feature=cli type=command control=iteration dimension=1
-//ff:what portIDs — port each entity ID in order; the reports and numbers of the documents written
+//ff:what portIDs — port each entity ID in order; the reports and document numbers of the documents written
 package main
 
 import (
@@ -14,8 +14,8 @@ import (
 )
 
 // portIDs ports prefix+n for each n under issuer with prov (portOne). It returns the reports of
-// all IDs (missing ones too, with no counts) and the numbers of the
-// documents written. The first error stops it.
+// all IDs (missing ones too, with no counts) and the document numbers
+// (port.DocNumber) of the documents written. The first error stops it.
 func portIDs(db *sql.DB, dir resolve.Dir, prefix string, nums []uint64, issuer []core.Word, c config, prov port.Provenance) ([]port.Report, []uint64, error) {
 	var reps []port.Report
 	var written []uint64
@@ -27,7 +27,8 @@ func portIDs(db *sql.DB, dir resolve.Dir, prefix string, nums []uint64, issuer [
 		}
 		reps = append(reps, rep)
 		if ok {
-			written = append(written, n)
+			doc, _ := port.DocNumber(prefix[0], n) // BuildDoc already accepted this ID's number
+			written = append(written, doc)
 		}
 	}
 	return reps, written, nil

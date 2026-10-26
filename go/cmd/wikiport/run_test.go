@@ -15,7 +15,7 @@ func TestRun(t *testing.T) {
 	if err := run([]string{"-root", root, "-from", "1", "-to", "3", "-langs", "en", "-commit", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "-lib-commit", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "-schema", schema, "-report", report}); err != nil {
 		t.Fatal(err)
 	}
-	for _, p := range []string{".well-known/geul/0x00010000/documents.geul", ".well-known/geul/0x00010001/documents.geul", "r.tsv"} {
+	for _, p := range []string{".well-known/geul/0x00010000/documents.geul", ".well-known/geul/0x00010000/0x500000000000001f", "r.tsv"} {
 		if _, err := os.Stat(filepath.Join(root, p)); err != nil {
 			t.Fatal(err)
 		}
@@ -39,16 +39,16 @@ func TestRun(t *testing.T) {
 	if err := run([]string{"-root", blocked, "-from", "1", "-to", "1", "-commit", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "-lib-commit", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "-schema", schema}); err == nil {
 		t.Fatal("unwritable: want error")
 	}
-	// An Issuer directory that is a file: the properties of Q1 cannot be
-	// published, and with no documents (Q6 was never created) neither index
-	// can be written.
+	// A path that is a file: P31's document folder (the property Q1 uses
+	// cannot be published), the Issuer directory (Q1 cannot be published) and,
+	// with no documents (Q6 was never created), the index.
 	for _, c := range []struct{ file, from string }{
-		{"0x00010001", "1"},
+		{"0x00010000/0x500000000000001f", "1"},
+		{"0x00010000", "1"},
 		{"0x00010000", "6"},
-		{"0x00010001", "6"},
 	} {
 		r := t.TempDir()
-		os.MkdirAll(filepath.Join(r, ".well-known/geul"), 0o755)
+		os.MkdirAll(filepath.Dir(filepath.Join(r, ".well-known/geul", c.file)), 0o755)
 		os.WriteFile(filepath.Join(r, ".well-known/geul", c.file), nil, 0o644)
 		if err := run([]string{"-root", r, "-from", c.from, "-to", c.from, "-langs", "en", "-commit", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "-lib-commit", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "-schema", schema}); err == nil {
 			t.Fatalf("%s file, Q%s: want error", c.file, c.from)

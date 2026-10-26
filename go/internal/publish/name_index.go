@@ -1,19 +1,18 @@
 //ff:func feature=publish type=encoder control=iteration dimension=1
-//ff:what NameIndex — an Issuer's documents.geul: BIND(DOC-POINTER(issuer, number, 0), prefix+number) per document
+//ff:what NameIndex — an Issuer's documents.geul: BIND(DOC-POINTER(issuer, number, 0), docName) per document
 package publish
 
 import (
 	"slices"
-	"strconv"
 
 	"github.com/geul-org/geul/go/pkg/core"
 )
 
 // NameIndex writes the documents.geul of issuer (GEUL-ORG 문서 이름): one BIND
-// per document number, Subject DOC-POINTER(issuer, number, 0), name prefix
-// followed by the number (q42, p31). Numbers are bound in ascending order,
+// per document number, Subject DOC-POINTER(issuer, number, 0), named by
+// docName (q42, p31). A number without a kind letter is an error. Numbers are bound in ascending order,
 // Edge Ids from 1. documents.geul has no DOC-ID (names not starting with 0x).
-func NameIndex(issuer []core.Word, prefix string, nums []uint64) ([]byte, error) {
+func NameIndex(issuer []core.Word, nums []uint64) ([]byte, error) {
 	sorted := slices.Clone(nums)
 	slices.Sort(sorted)
 	enc := func(r core.Record) []core.Word { ws, _ := core.EncodeRecord(r); return ws }
@@ -23,7 +22,11 @@ func NameIndex(issuer []core.Word, prefix string, nums []uint64) ([]byte, error)
 		if err != nil {
 			return nil, err
 		}
-		name := core.EncodeBytesValue(core.CodecUTF8TextEven, []byte(prefix+strconv.FormatUint(n, 10)))
+		s, err := docName(n)
+		if err != nil {
+			return nil, err
+		}
+		name := core.EncodeBytesValue(core.CodecUTF8TextEven, []byte(s))
 		p := slices.Concat(enc(core.EncodeLocalRef(uint64(i+1))), enc(ptr), enc(name))
 		in = append(in, enc(core.Record{Kind: core.KindEdge, Codec: core.EdgeBind, Payload: p})...)
 	}

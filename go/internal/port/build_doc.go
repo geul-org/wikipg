@@ -14,13 +14,17 @@ import (
 // HEAD provenance (headRecords), then LABEL per label, DESCRIPTION per
 // description, ALIAS per alias and a
 // TRIPLE followed by its QUALIFIERs per convertible claim, Edge Ids from 1. The document ID is the
-// number of e's ID. The report counts what was written and skipped.
+// DocNumber of e's ID (its letter and number). The report counts what was written and skipped.
 func BuildDoc(e source.Entity, issuer []core.Word, p Provenance) ([]byte, Report, error) {
 	rep := Report{ID: e.ID, Skipped: map[string]int{}, Raw: map[string]int{}}
-	_, num, okNum := entityNumber(e.ID)
+	prefix, n, okNum := entityNumber(e.ID)
 	subject, okRef := entityRef(e.ID)
 	if !okNum || !okRef {
 		return nil, rep, fmt.Errorf("wikiport: %q is not an item or property ID", e.ID)
+	}
+	num, err := DocNumber(prefix, n)
+	if err != nil {
+		return nil, rep, err
 	}
 	head, err := headRecords(issuer, num, subject, p)
 	if err != nil {

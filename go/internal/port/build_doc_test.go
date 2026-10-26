@@ -1,5 +1,5 @@
 //ff:func feature=port type=encoder control=sequence
-//ff:what TestBuildDoc — a full document with LABEL, DESCRIPTION, ALIAS, a TRIPLE and its QUALIFIER passes schema with its DOC-ID and counts; a bad ID and a bad Issuer fail
+//ff:what TestBuildDoc — a full document with LABEL, DESCRIPTION, ALIAS, a TRIPLE and its QUALIFIER passes schema with its DOC-ID (Q in the top byte) and counts; a bad ID and a bad Issuer fail
 package port
 
 import (
@@ -30,9 +30,18 @@ func TestBuildDoc(t *testing.T) {
 	if fs := schema.Check(b, schema.Options{}).Facts; len(fs) != 0 {
 		t.Fatalf("schema: %+v", fs)
 	}
+	ws, _ := core.ReadWords(b)
+	if parts, err := core.SplitDocument(ws); err != nil || len(parts.Head) < 2 {
+		t.Fatalf("split: %v", err)
+	} else if _, doc, err := core.DecodeDocID(parts.Head[1]); err != nil || doc[0] != 0x5100 || doc[3] != 42 {
+		t.Fatalf("DOC-ID: %04X %v", doc, err)
+	}
 	d, _ := inspect.Decode(b)
 	if len(d.Body) != 5 || d.Body[1].Record.Codec != edgeDescription || d.Body[2].Record.Codec != edgeAlias || d.Body[3].ID != 4 || d.Body[4].ID != 5 {
 		t.Fatalf("body %+v", d.Body)
+	}
+	if _, _, err := BuildDoc(source.Entity{ID: "Q72057594037927936"}, []core.Word{1, 0}, prov()); err == nil {
+		t.Fatal("Q2^56: want error")
 	}
 	if _, _, err := BuildDoc(source.Entity{ID: "L1"}, []core.Word{1, 0}, prov()); err == nil {
 		t.Fatal("lexeme: want error")

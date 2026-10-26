@@ -12,16 +12,16 @@ import (
 )
 
 // writeIndex writes `<root>/.well-known/geul/<issuer>/documents.geul` naming
-// prefix+number for each written document and every document already
+// each written document by its kind letter and number (q42, p31) and every document already
 // published under the Issuer (publishedNumbers), so a run over another range
 // does not drop the names of earlier runs (publish.NameIndex).
-func writeIndex(root string, issuer []core.Word, prefix string, nums []uint64) error {
+func writeIndex(root string, issuer []core.Word, nums []uint64) error {
 	dir := filepath.Join(root, ".well-known", "geul", core.FormatID(issuer))
 	published, err := publishedNumbers(dir)
 	if err != nil {
 		return err
 	}
-	b, err := publish.NameIndex(issuer, prefix, append(published, nums...))
+	b, err := publish.NameIndex(issuer, append(published, nums...))
 	if err != nil {
 		return err
 	}

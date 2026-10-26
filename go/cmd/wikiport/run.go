@@ -1,5 +1,5 @@
 //ff:func feature=cli type=command control=sequence
-//ff:what run — port the QID range, then the properties they use, write both name indexes and the report
+//ff:what run — port the QID range, then the properties they use, write the name index and the report
 package main
 
 import (
@@ -13,9 +13,9 @@ import (
 )
 
 // run reads the loaded dump's provenance (source.LoadDump, provenanceOf) and
-// ports Q<from>…Q<to> under wikidata-qid.geul.org (0x00010000), then every
-// property those documents use under wikidata-pid.geul.org (0x00010001),
-// writes both documents.geul and, when asked, the report.
+// ports Q<from>…Q<to>, then every property those documents use, all under
+// the one Issuer wikidata.geul.org (0x00010000; document IDs by
+// port.DocNumber), writes its documents.geul and, when asked, the report.
 func run(args []string) error {
 	c, err := parseFlags(args)
 	if err != nil {
@@ -35,19 +35,16 @@ func run(args []string) error {
 		return err
 	}
 	dir := resolve.Dir{Root: c.Root}
-	qIssuer, pIssuer := []core.Word{1, 0}, []core.Word{1, 1}
-	qReps, qDocs, err := portIDs(db, dir, "Q", rangeNumbers(c.From, c.To), qIssuer, c, prov)
+	issuer := []core.Word{1, 0}
+	qReps, qDocs, err := portIDs(db, dir, "Q", rangeNumbers(c.From, c.To), issuer, c, prov)
 	if err != nil {
 		return err
 	}
-	pReps, pDocs, err := portIDs(db, dir, "P", propertyNumbers(qReps), pIssuer, c, prov)
+	pReps, pDocs, err := portIDs(db, dir, "P", propertyNumbers(qReps), issuer, c, prov)
 	if err != nil {
 		return err
 	}
-	if err := writeIndex(c.Root, qIssuer, "q", qDocs); err != nil {
-		return err
-	}
-	if err := writeIndex(c.Root, pIssuer, "p", pDocs); err != nil {
+	if err := writeIndex(c.Root, issuer, append(qDocs, pDocs...)); err != nil {
 		return err
 	}
 	fmt.Printf("Q: %d documents of %d IDs, P: %d documents of %d IDs\n", len(qDocs), len(qReps), len(pDocs), len(pReps))
