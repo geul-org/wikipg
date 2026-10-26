@@ -1,5 +1,5 @@
 //ff:func feature=source type=loader control=sequence
-//ff:what TestLoadEntity — Q42 with labels, descriptions, aliases and claims of its dump only; a missing ID is false; a bad schema and a closed handle error
+//ff:what TestLoadEntity — Q42 with labels, descriptions, aliases and claims of its dump only, P31 with its datatype; a missing ID is false; a bad schema and a closed handle error
 package source
 
 import "testing"
@@ -9,6 +9,9 @@ func TestLoadEntity(t *testing.T) {
 	e, ok, err := LoadEntity(db, s, "Q42", []string{"ko", "en"})
 	if err != nil || !ok || e.ID != "Q42" || len(e.Labels) != 2 || len(e.Descriptions) != 2 || len(e.Aliases) != 2 || len(e.Claims) != 8 || len(e.Claims[0].Qualifiers) != 3 {
 		t.Fatalf("Q42: %v %v %+v", ok, err, e)
+	}
+	if p, ok, err := LoadEntity(db, s, "P31", []string{"en"}); err != nil || !ok || p.Datatype != "wikibase-item" {
+		t.Fatalf("P31: %+v %v %v", p.Datatype, ok, err)
 	}
 	if _, ok, err := LoadEntity(db, s, "Q6", []string{"en"}); err != nil || ok {
 		t.Fatalf("Q6: %v %v", ok, err)

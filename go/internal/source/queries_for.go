@@ -5,7 +5,8 @@ package source
 import "fmt"
 
 // queriesFor reads one entity of dump s.Dump from schema s.Schema (wiki/
-// wikidata.sql; the name must pass validSchema): labels and descriptions by
+// wikidata.sql; the name must pass validSchema): whether it exists with its
+// datatype (properties), labels and descriptions by
 // language, aliases by language then dump order, statements by statement_id
 // (dump order) and qualifiers by statement then their dump order
 // (qualifiers-order). A value is the bare entity ID for an entity
@@ -16,7 +17,7 @@ import "fmt"
 func queriesFor(s Store) entityQueries {
 	value := "coalesce(value_entity, value #>> '{}', '')"
 	return entityQueries{
-		Exists:       fmt.Sprintf("SELECT count(*) FROM %s.entity WHERE entity_id = $1 AND dump_id = %d", s.Schema, s.Dump),
+		Exists:       fmt.Sprintf("SELECT count(*), coalesce(max(datatype), '') FROM %s.entity WHERE entity_id = $1 AND dump_id = %d", s.Schema, s.Dump),
 		Labels:       fmt.Sprintf("SELECT language, value FROM %s.label WHERE entity_id = $1 AND dump_id = %d AND language = ANY($2) ORDER BY language", s.Schema, s.Dump),
 		Descriptions: fmt.Sprintf("SELECT language, value FROM %s.description WHERE entity_id = $1 AND dump_id = %d AND language = ANY($2) ORDER BY language", s.Schema, s.Dump),
 		Aliases:      fmt.Sprintf("SELECT language, value FROM %s.alias WHERE entity_id = $1 AND dump_id = %d AND language = ANY($2) ORDER BY language, ordinal", s.Schema, s.Dump),

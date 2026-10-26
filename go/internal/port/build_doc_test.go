@@ -1,5 +1,5 @@
 //ff:func feature=port type=encoder control=sequence
-//ff:what TestBuildDoc — a full document with LABEL, DESCRIPTION, ALIAS, a TRIPLE and its QUALIFIER passes schema with its DOC-ID (Q in the top byte) and counts; a bad ID and a bad Issuer fail
+//ff:what TestBuildDoc — a full document with LABEL, DESCRIPTION, ALIAS, a TRIPLE and its QUALIFIER passes schema with its DOC-ID (Q in the top byte) and counts; a property states its datatype; a bad ID and a bad Issuer fail
 package port
 
 import (
@@ -39,6 +39,13 @@ func TestBuildDoc(t *testing.T) {
 	d, _ := inspect.Decode(b)
 	if len(d.Body) != 5 || d.Body[1].Record.Codec != edgeDescription || d.Body[2].Record.Codec != edgeAlias || d.Body[3].ID != 4 || d.Body[4].ID != 5 {
 		t.Fatalf("body %+v", d.Body)
+	}
+	pb, prep, err := BuildDoc(source.Entity{ID: "P214", Datatype: "external-id"}, []core.Word{1, 0}, prov())
+	if fs := schema.Check(pb, schema.Options{}).Facts; err != nil || len(fs) != 0 || len(prep.Skipped) != 0 {
+		t.Fatalf("property: %v %+v", err, fs)
+	}
+	if pd, _ := inspect.Decode(pb); len(pd.Body) != 2 || pd.Body[1].Record.Codec != edgeTriple {
+		t.Fatalf("property body %+v", pd.Body)
 	}
 	if _, _, err := BuildDoc(source.Entity{ID: "Q72057594037927936"}, []core.Word{1, 0}, prov()); err == nil {
 		t.Fatal("Q2^56: want error")

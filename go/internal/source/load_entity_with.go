@@ -8,15 +8,15 @@ import (
 	"github.com/lib/pq"
 )
 
-// loadEntityWith reads the entity id by q: existence, then labels, descriptions and
+// loadEntityWith reads the entity id by q: existence and datatype, then labels, descriptions and
 // aliases in langs, then claims with their qualifiers (attachQualifiers). It is false, with no error, when the entity does not
 // exist.
 func loadEntityWith(db *sql.DB, q entityQueries, id string, langs []string) (Entity, bool, error) {
-	ok, err := entityExists(db, q.Exists, id)
+	datatype, ok, err := entityHead(db, q.Exists, id)
 	if err != nil || !ok {
 		return Entity{}, false, err
 	}
-	e := Entity{ID: id}
+	e := Entity{ID: id, Datatype: datatype}
 	if e.Labels, err = loadTexts(db, q.Labels, id, pq.Array(langs)); err != nil {
 		return Entity{}, false, err
 	}

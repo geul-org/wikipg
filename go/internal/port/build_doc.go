@@ -12,7 +12,7 @@ import (
 
 // BuildDoc writes the document of entity e under issuer (wiki/README): the
 // HEAD provenance (headRecords), then LABEL per label, DESCRIPTION per
-// description, ALIAS per alias and a
+// description, ALIAS per alias, a property's datatype (datatypeEdges) and a
 // TRIPLE followed by its QUALIFIERs per convertible claim, Edge Ids from 1. The document ID is the
 // DocNumber of e's ID (its letter and number). The report counts what was written and skipped.
 func BuildDoc(e source.Entity, issuer []core.Word, p Provenance) ([]byte, Report, error) {
@@ -35,6 +35,7 @@ func BuildDoc(e source.Entity, issuer []core.Word, p Provenance) ([]byte, Report
 	descriptions := textEdges(edgeDescription, &next, subject, e.Descriptions, &rep)
 	aliases := textEdges(edgeAlias, &next, subject, e.Aliases, &rep)
 	body := append(append(labels, descriptions...), aliases...)
+	body = append(body, datatypeEdges(&next, subject, e.Datatype, &rep)...)
 	body = append(body, tripleEdges(&next, subject, e.Claims, &rep)...)
 	rep.Labels, rep.Descriptions, rep.Aliases = len(labels), len(descriptions), len(aliases)
 	return document(head, body), rep, nil

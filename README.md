@@ -84,7 +84,7 @@ wikiload로 geuldev의 스키마 `wikidata`에 적재할 판본이다. 위 20250
   - Q·P를 가리키는 Reference(WIKIDATA-QID·PID)는 문서 위치와 상관없다. 바뀐 것은 문서가 놓이는 주소뿐이다.
 - **문서 단위:** QID 하나당 `.geul` 문서 하나.
 - **대상:** 우선 Q1 ~ Q1000. PID는 필요한 만큼 추가한다.
-- **레코드:** LABEL, DESCRIPTION, ALIAS, TRIPLE과 그 QUALIFIER를 작성한다(이 순서).
+- **레코드:** LABEL, DESCRIPTION, ALIAS, (속성이면) 데이터 타입, TRIPLE과 그 QUALIFIER를 작성한다(이 순서).
 - **값:** 항목(QID), 문자열, 외부 ID, URL·커먼즈(URI), 날짜, monolingualtext, 좌표, 수량(아래 값 변환 표). 처음 범위는 날짜까지였고 2026-10-26에 monolingualtext·좌표·URI·수량을 더했다. 그 밖의 값(Lexeme 등)은 변환하지 않았다고 기록한다.
 - **언어:** ko, en.
 - **명세:** 아직 없는 명세는 설계하면서 제안하고 검토를 받는다(ALIAS, DESCRIPTION, TRIPLE, QUALIFIER는 docs/edge에 반영).
@@ -179,6 +179,12 @@ go run ./cmd/wikiload -in /mnt/d/geul/wikidata/wikidata-20261019-all.json.bz2 -c
 
 - 사설 확장(`x-`)의 뜻: `x-formal` 존댓말(격식체), `x-informal` 반말(비격식체), `x-bms` 자바어 반유마스 방언, `x-tara` 나폴리어 타란토 방언.
 - 표에 없고 BCP 47 형식도 아닌 코드(빈 언어 등)는 레이블·설명·별칭이면 건너뛰고(보고서 `skipped`), monolingualtext면 원문 UTF8-TEXT로 보존한다(보고서 `raw`).
+- 속성(P) 문서는 그 속성의 데이터 타입(`entity.datatype`)을 문서 안에 적는다. 다른 문서에서 그 속성을 만난 해석기가 속성 문서 하나만 보면 되게 한다(별도 어휘 문서를 두지 않는다, 2026-10-26 결정).
+  ```
+  REFERENCE-NODE( #n → URI http://wikiba.se/ontology#propertyType )
+  TRIPLE( #n, P214, URI http://wikiba.se/ontology#ExternalId, normal )
+  ```
+  어휘는 위키데이터 RDF의 Wikibase 온톨로지 이름 그대로다(18종, files/geul/wikidata-datatype-mapping.md). 모르는 데이터 타입은 쓰지 않고 보고서 `skipped`에 남긴다. 문서당 약 50 WORD.
 - 클레임은 TRIPLE(Edge Id, Predicate, Subject, Object, Rank)이고, 그 qualifier는 바로 뒤에 QUALIFIER(Edge Id, Property, 대상 TRIPLE의 Edge Id, Value)로 잇는다. qualifier 값은 본 값과 같은 규칙으로 바꾼다(날짜 원문 보존 포함). 출처는 담지 않는다(DB에 없다).
 - qualifier 순서는 `triple_qualifiers`의 물리 행 순서(ctid)다. 같은 속성 안의 순서는 원본과 같지만 속성 사이 순서는 원본이 아니다(위 빈칸).
 - TRANSFORMED-BY는 도구 Reference(EXTERNAL-ISSUER-1WORD, geul.org URL 정의 Reference 문서의 LOCAL 2) + 커밋 SHA1-DIGEST다(2026-10-26). 커밋은 커밋된 소스여야 한다: 작업 트리에 커밋되지 않은 변경이 있으면 그 커밋 ID를 쓰지 말고 먼저 커밋한다(도구는 아직 검사하지 않는다).

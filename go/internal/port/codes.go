@@ -7,6 +7,7 @@ package port
 // edge/QUALIFIER, the Meta this porter writes in HEAD and EXTERNAL-ISSUER-1WORD.
 const (
 	codecURIEven      uint8 = 0x44 // Value URI (even bytes)
+	edgeReferenceNode uint8 = 0x00 // Edge REFERENCE-NODE (edge/REFERENCE-NODE)
 	edgeLabel         uint8 = 0x04 // Edge LABEL
 	edgeAlias         uint8 = 0x05 // Edge ALIAS (edge/ALIAS)
 	edgeDescription   uint8 = 0x06 // Edge DESCRIPTION (edge/DESCRIPTION)
