@@ -134,8 +134,9 @@ go run ./cmd/wikiload -in /mnt/d/geul/wikidata/wikidata-20261019-all.json.bz2 -c
 ```
 
 - 스키마: `psql -d geuldev -f wikidata.sql`은 1~3절(타입·테이블)만 만든다. 4절(재개 정리·출처 중복 정리·제약·색인)은 주석으로 되어 있고, 적재를 마친 뒤 주석을 풀어 실행한다.
-- 테이블: `dump`(파일·URL·크기·MD5·SHA-1·SHA-256·적재 도구 커밋), `entity_raw`(덤프 줄 원문), `load_error`, `entity`, `label`, `description`, `alias`, `sitelink`, `statement`, `qualifier`, `reference`, `statement_reference`, `reference_snak`. 개체 단위 테이블은 모두 `dump_id`를 가진다.
+- 테이블: `dump`(파일·URL·크기·MD5·SHA-1·SHA-256·적재 도구 커밋), `entity_raw`(덤프 줄 원문), `load_error`, `entity`, `label`, `description`, `alias`, `sitelink`, `statement`, `qualifier`, `reference`, `statement_reference`, `reference_snak`, Lexeme용 `lexeme`, `lemma`, `form`, `form_representation`, `sense`, `sense_gloss`. 개체 단위 테이블은 모두 `dump_id`를 가진다.
 - 기본값은 기계를 30% 남긴다: CPU 70% 중 1/5 압축 해제(lbzip2), 2/5 JSON 파싱, 작성자(DB 연결) 4, 배치 8 MiB(메모리 약 1 GB). 2026-10-26 측정에서 작성자 4·8 MiB가 가장 빨랐다.
+- Lexeme은 별도 덤프(`wikidata-YYYYMMDD-lexemes.json.bz2`)라 다른 판 번호로 적재한다: `-in …lexemes.json.bz2 -dump-id 2`. Form·Sense도 `entity`에 행(type `form`·`sense`, kind L)을 두어 그 statement(`entity_id` = `L4-F1`)가 가리킬 개체가 있다. 표제어·어형 표기는 낱말 자체라 `-langs`로 거르지 않고, 뜻풀이(gloss)는 거른다. Lexeme·Form·Sense의 statement 키는 한 줄 안에서 이어진다.
 - 체크포인트에서 이어 읽는다(`-from-line 0`). 언어는 `-langs`(기본 `ko,en`, `all`은 전부).
 - 플래그 전체: `go run ./cmd/wikiload -h`.
 - wikiport는 이 스키마를 읽는다(2026-10-26 전환). 테스트는 `testdata/fixture.sql`을 임시 스키마에 넣어 돌린다.

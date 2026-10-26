@@ -16,7 +16,7 @@ func TestTables(t *testing.T) {
 		}
 		seen[x.Name] = true
 	}
-	if len(ts) != 12 || ts[0].Name != "entity_raw" || ts[11].Name != "load_error" {
+	if len(ts) != 18 || ts[0].Name != "entity_raw" || ts[11].Name != "lexeme" || ts[17].Name != "load_error" {
 		t.Fatalf("got %d tables", len(ts))
 	}
 	for _, i := range []int{6, 7, 10} {

@@ -19,6 +19,12 @@ func tables() []table {
 		{"reference", []string{"hash", "dump_id"}},
 		{"statement_reference", []string{"statement_id", "ordinal", "hash"}},
 		{"reference_snak", append([]string{"hash", "dump_id", "ordinal", "property", "value_ordinal"}, snak...)},
+		{"lexeme", []string{"entity_id", "dump_id", "language", "lexical_category"}},
+		{"lemma", []string{"entity_id", "dump_id", "language", "value"}},
+		{"form", []string{"entity_id", "lexeme_id", "dump_id", "ordinal", "grammatical_features"}},
+		{"form_representation", []string{"entity_id", "dump_id", "language", "value"}},
+		{"sense", []string{"entity_id", "lexeme_id", "dump_id", "ordinal"}},
+		{"sense_gloss", []string{"entity_id", "dump_id", "language", "value"}},
 		{"load_error", []string{"dump_id", "line_no", "entity_id", "stage", "message", "excerpt"}},
 	}
 }

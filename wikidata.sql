@@ -177,6 +177,56 @@ CREATE TABLE qualifier (
     hash           text                                  -- snak hash
 );
 
+-- Lexeme(별도 덤프 lexemes.json). 개체 머리는 entity(type lexeme)에 있다. Form·Sense도 entity에
+-- 행(type form·sense, kind L, Lexeme 번호)을 두어 그 statement(entity_id = L4-F1)가 가리킬 개체가 있다.
+CREATE TABLE lexeme (
+    entity_id        text     NOT NULL,                  -- L4
+    dump_id          smallint NOT NULL,
+    language         text,                               -- 언어 항목 Q ID (Q1860 영어)
+    lexical_category text                                -- 품사 항목 Q ID (Q24905 동사)
+);
+
+-- 표제어. 낱말 자체라 -langs로 거르지 않는다. language는 언어 변종 코드(en, ko, sr-el …).
+CREATE TABLE lemma (
+    entity_id  text     NOT NULL,
+    dump_id    smallint NOT NULL,
+    language   text     NOT NULL,
+    value      text     NOT NULL
+);
+
+-- 어형. ordinal은 덤프의 forms 배열 순서(0부터). grammatical_features는 문법 자질 항목 Q ID.
+CREATE TABLE form (
+    entity_id            text     NOT NULL,              -- L4-F1
+    lexeme_id            text     NOT NULL,
+    dump_id              smallint NOT NULL,
+    ordinal              smallint NOT NULL,
+    grammatical_features text[]   NOT NULL DEFAULT '{}'
+);
+
+-- 어형의 표기. 낱말 자체라 -langs로 거르지 않는다.
+CREATE TABLE form_representation (
+    entity_id  text     NOT NULL,
+    dump_id    smallint NOT NULL,
+    language   text     NOT NULL,
+    value      text     NOT NULL
+);
+
+-- 뜻. ordinal은 senses 배열 순서. 뜻이 가리키는 항목은 statement(P5137 이 뜻의 항목 등)에 있다.
+CREATE TABLE sense (
+    entity_id  text     NOT NULL,                        -- L4-S1
+    lexeme_id  text     NOT NULL,
+    dump_id    smallint NOT NULL,
+    ordinal    smallint NOT NULL
+);
+
+-- 뜻풀이. 다른 언어로 옮긴 뜻이라 설명처럼 -langs로 거른다.
+CREATE TABLE sense_gloss (
+    entity_id  text     NOT NULL,
+    dump_id    smallint NOT NULL,
+    language   text     NOT NULL,
+    value      text     NOT NULL
+);
+
 -- 출처 묶음. 위키데이터는 같은 출처를 여러 statement가 hash로 공유한다.
 CREATE TABLE reference (
     hash     text     NOT NULL,                          -- reference hash
@@ -247,6 +297,8 @@ COMMIT;
 --   | 위키백과 제목 → Q ID                                | sitelink_site_title                    |
 --   | 레이블·별칭 검색 (언어별, 대소문자 무시, 접두어 포함)  | label_language_value, alias_language_value |
 --   | 적재 오류를 줄 순서로                                | load_error_dump_line                   |
+--   | Lexeme의 어형·뜻을 순서대로                          | form_lexeme, sense_lexeme              |
+--   | 표제어·어형 표기 검색 (낱말 → Lexeme·Form)            | lemma_language_value, form_representation_language_value |
 --
 -- 레이블·별칭 검색 색인은 lower(value)에 text_pattern_ops를 쓴다. 기본 정렬 규칙(C가 아닌
 -- 로캘)의 btree는 LIKE 'abc%' 접두어 검색에 쓰이지 않는다. 같음 비교에도 쓰인다.
@@ -267,6 +319,12 @@ COMMIT;
 -- ALTER TABLE reference           ADD PRIMARY KEY (hash, dump_id);
 -- ALTER TABLE statement_reference ADD PRIMARY KEY (statement_id, ordinal);
 -- ALTER TABLE reference_snak      ADD PRIMARY KEY (hash, dump_id, ordinal);
+-- ALTER TABLE lexeme              ADD PRIMARY KEY (entity_id, dump_id);
+-- ALTER TABLE lemma               ADD PRIMARY KEY (entity_id, dump_id, language);
+-- ALTER TABLE form                ADD PRIMARY KEY (entity_id, dump_id);
+-- ALTER TABLE form_representation ADD PRIMARY KEY (entity_id, dump_id, language);
+-- ALTER TABLE sense               ADD PRIMARY KEY (entity_id, dump_id);
+-- ALTER TABLE sense_gloss         ADD PRIMARY KEY (entity_id, dump_id, language);
 --
 -- -- 참조 무결성. 적재 도구의 버그(고아 qualifier, 없는 출처 hash)를 여기서 잡는다.
 -- ALTER TABLE entity_raw          ADD FOREIGN KEY (dump_id) REFERENCES dump;
@@ -277,6 +335,11 @@ COMMIT;
 -- ALTER TABLE statement           ADD FOREIGN KEY (entity_id, dump_id) REFERENCES entity;
 -- ALTER TABLE qualifier           ADD FOREIGN KEY (statement_id) REFERENCES statement;
 -- ALTER TABLE statement_reference ADD FOREIGN KEY (statement_id) REFERENCES statement;
+-- ALTER TABLE lexeme              ADD FOREIGN KEY (entity_id, dump_id) REFERENCES entity;
+-- ALTER TABLE form                ADD FOREIGN KEY (entity_id, dump_id) REFERENCES entity;
+-- ALTER TABLE form                ADD FOREIGN KEY (lexeme_id, dump_id) REFERENCES lexeme;
+-- ALTER TABLE sense               ADD FOREIGN KEY (entity_id, dump_id) REFERENCES entity;
+-- ALTER TABLE sense               ADD FOREIGN KEY (lexeme_id, dump_id) REFERENCES lexeme;
 --
 -- CREATE UNIQUE INDEX entity_raw_dump_line        ON entity_raw (dump_id, line_no);
 -- CREATE INDEX entity_dump_kind_num               ON entity (dump_id, kind, num);
@@ -292,6 +355,10 @@ COMMIT;
 -- CREATE INDEX label_language_value               ON label (language, lower(value) text_pattern_ops);
 -- CREATE INDEX alias_language_value               ON alias (language, lower(value) text_pattern_ops);
 -- CREATE INDEX load_error_dump_line               ON load_error (dump_id, line_no);
+-- CREATE INDEX form_lexeme                        ON form (lexeme_id, dump_id, ordinal);
+-- CREATE INDEX sense_lexeme                       ON sense (lexeme_id, dump_id, ordinal);
+-- CREATE INDEX lemma_language_value               ON lemma (language, lower(value) text_pattern_ops);
+-- CREATE INDEX form_representation_language_value ON form_representation (language, lower(value) text_pattern_ops);
 --
 -- ANALYZE;
 -- COMMIT;

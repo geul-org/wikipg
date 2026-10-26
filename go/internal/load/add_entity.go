@@ -1,13 +1,14 @@
 //ff:func feature=load type=model control=sequence
-//ff:what Rows.AddEntity — every row one dump entity gives: raw line, head, terms, sitelinks, statements with qualifiers and references
+//ff:what Rows.AddEntity — every row one dump entity gives: raw line, head, terms, sitelinks, statements with qualifiers and references, lexeme parts
 package load
 
 import "github.com/geul-org/wikiport/go/internal/dump"
 
 // AddEntity adds the rows of entity e from dump line line (its trimmed JSON
 // raw): the raw line when c.Raw (entity_raw), the head (entity), terms in the
-// kept languages (addTerms), sitelinks (addSitelinks) and statements
-// (addStatements). An ID the loader cannot split is recorded as a load_error
+// kept languages (addTerms), sitelinks (addSitelinks), statements
+// (addStatements) and, for a lexeme, its lemmas, forms and senses
+// (addLexeme). An ID the loader cannot split is recorded as a load_error
 // and nothing else is added.
 func (r *Rows) AddEntity(c Config, line int64, raw []byte, e dump.Entity, refs *RefSet) {
 	kind, num, ok := dump.SplitID(e.ID)
@@ -29,5 +30,7 @@ func (r *Rows) AddEntity(c Config, line int64, raw []byte, e dump.Entity, refs *
 	r.add("entity", e.ID, line, string(kind), num, e.Type, nullable(e.Datatype), lastrev, nullable(e.Modified), c.DumpID)
 	r.addTerms(c, line, e)
 	r.addSitelinks(c, line, e)
-	r.addStatements(c, line, e, refs)
+	if next, ok := r.addStatements(c, line, e.ID, e.Claims, 0, refs); ok {
+		r.addLexeme(c, line, e, num, next, refs)
+	}
 }
