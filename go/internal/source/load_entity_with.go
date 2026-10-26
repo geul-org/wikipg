@@ -1,5 +1,5 @@
 //ff:func feature=source type=loader control=sequence
-//ff:what loadEntityWith — an entity's labels, aliases and claims by the given queries; false when the ID was never loaded
+//ff:what loadEntityWith — an entity's labels, aliases, claims and their qualifiers by the given queries; false when the ID was never loaded
 package source
 
 import (
@@ -9,7 +9,7 @@ import (
 )
 
 // loadEntityWith reads the entity id by q: existence, then labels and aliases
-// in langs, then claims. It is false, with no error, when the entity does not
+// in langs, then claims with their qualifiers (attachQualifiers). It is false, with no error, when the entity does not
 // exist.
 func loadEntityWith(db *sql.DB, q entityQueries, id string, langs []string) (Entity, bool, error) {
 	ok, err := entityExists(db, q.Exists, id)
@@ -26,5 +26,10 @@ func loadEntityWith(db *sql.DB, q entityQueries, id string, langs []string) (Ent
 	if e.Claims, err = loadClaims(db, q.Claims, id); err != nil {
 		return Entity{}, false, err
 	}
+	qs, err := loadQualifiers(db, q.Qualifiers, id)
+	if err != nil {
+		return Entity{}, false, err
+	}
+	attachQualifiers(e.Claims, qs)
 	return e, true, nil
 }

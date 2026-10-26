@@ -16,7 +16,7 @@ func TestPortOne(t *testing.T) {
 	root := t.TempDir()
 	c := config{Langs: []string{"ko", "en"}, Commit: "test"}
 	rep, ok, err := portOne(db, resolve.Dir{Root: root}, "Q42", []core.Word{1, 0}, c)
-	if err != nil || !ok || rep.Statements == 0 {
+	if err != nil || !ok || rep.Triples == 0 || rep.Qualifiers == 0 {
 		t.Fatalf("Q42: %+v %v %v", rep, ok, err)
 	}
 	if _, err := os.Stat(filepath.Join(root, ".well-known/geul/0x00010000/0x000000000000002a/0x00000001.geul")); err != nil {

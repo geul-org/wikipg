@@ -1,5 +1,5 @@
 //ff:func feature=cli type=command control=sequence
-//ff:what portOne — load, build and publish one entity's document; false when the entity was never loaded
+//ff:what portOne — load, build and store one entity's document as version 1; false when the entity was never loaded
 package main
 
 import (
@@ -13,9 +13,9 @@ import (
 )
 
 // portOne ports entity id: loads it (source.LoadEntity), builds its document
-// under issuer (port.BuildDoc) and publishes it in dir (resolve.Dir.Publish:
-// the next version, its h/ copy and the version list). It is false when the
-// entity is not in the database.
+// under issuer (port.BuildDoc) and stores it in dir as version 1 over any
+// earlier one (resolve.Dir.Overwrite: development, no version per run). It is
+// false when the entity is not in the database.
 func portOne(db *sql.DB, dir resolve.Dir, id string, issuer []core.Word, c config) (port.Report, bool, error) {
 	e, ok, err := source.LoadEntity(db, id, c.Langs)
 	if err != nil || !ok {
@@ -25,7 +25,7 @@ func portOne(db *sql.DB, dir resolve.Dir, id string, issuer []core.Word, c confi
 	if err != nil {
 		return rep, false, err
 	}
-	if _, err := dir.Publish(b); err != nil {
+	if _, err := dir.Overwrite(b); err != nil {
 		return rep, false, err
 	}
 	return rep, true, nil

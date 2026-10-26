@@ -29,6 +29,8 @@
 | 항목별 판본(`lastrevid`) | **미적재.** DB에 없다. 덤프 판본으로 대신한다 |
 | 위키데이터 참조(references) | **미적재.** `triple_references`가 비어 있다 |
 | 적재 입력 파일 | **소실.** `/mnt/d/latest-all.json`이 없다 |
+| qualifier 순서 | **소실(일부).** 적재 도구가 qualifier를 Go map으로 순회해 속성 사이 순서(위키데이터 `qualifiers-order`)가 무작위로 저장됐다. 같은 속성 안의 값 순서는 보존된다 |
+| novalue·somevalue qualifier | **미적재.** 적재 도구가 `datavalue`가 없는 qualifier를 버렸다(예: 종료 시점 novalue = "아직 끝나지 않음") |
 | 덤프 판본 | **추정.** 위 근거로 0908 판으로 판단했다 |
 | 원본 해시 | **생략.** DB는 소실된 적재 입력에서 읽었으므로 보관 파일 해시는 DB 내용을 증명하지 못하고, 2025년 판은 덤프 사이트에 없어 대조할 수도 없다 |
 
@@ -61,10 +63,10 @@
 - **문서 ID:** QID·PID의 숫자 부분과 같다(Q42 → `0x000000000000002a`). Issuer가 나뉘어 Q와 P의 같은 숫자가 겹치지 않는다.
 - **문서 단위:** QID 하나당 `.geul` 문서 하나.
 - **대상:** 우선 Q1 ~ Q1000. PID는 필요한 만큼 추가한다.
-- **레코드:** TRIPLE 또는 STATEMENT, LABEL, ALIAS를 우선 작성한다.
+- **레코드:** LABEL, ALIAS, TRIPLE과 그 QUALIFIER를 작성한다.
 - **값:** 항목(QID), 문자열, 외부 ID, **날짜**까지. 날짜의 정밀도·달력(율리우스력 등) 문제는 작업하면서 해결책을 함께 찾는다. 그 밖의 값 형식은 변환하지 않았다고 기록한다.
 - **언어:** ko, en.
-- **명세:** 아직 없는 명세(TRIPLE, STATEMENT, ALIAS 등)는 설계하면서 제안하고 검토를 받는다.
+- **명세:** 아직 없는 명세는 설계하면서 제안하고 검토를 받는다(ALIAS, TRIPLE, QUALIFIER는 docs/edge에 반영).
 
 ## 출처 기록 (초기 최소 세트, files/geul/legacy.md)
 
@@ -90,11 +92,11 @@ go run ./cmd/wikiport -root ../.. -from 1 -to 1000 -commit "$(git rev-parse HEAD
 | `-from`, `-to` | QID 범위 | 1, 1000 |
 | `-langs` | 레이블·별칭 언어 | `ko,en` |
 | `-commit` | TRANSFORMED-BY에 남길 포팅 도구 커밋 (필수) | |
-| `-report` | 개체별 건수·건너뛴 사유·원문 보존 날짜의 사유 TSV (열: id, labels, aliases, statements, skipped, raw) | 없음 |
+| `-report` | 개체별 건수·건너뛴 사유·원문 보존 날짜의 사유 TSV (열: id, labels, aliases, triples, qualifiers, skipped, raw. qualifier 사유는 `qualifier ` 접두) | 없음 |
 | `-dsn` | PostgreSQL DSN | 비우면 PG* 환경변수 |
 
 - Q 범위를 먼저 옮기고, 그 문서들이 쓴 속성(Predicate, 값이 속성 개체인 것)을 이어서 옮긴 뒤 두 Issuer의 `documents.geul`을 쓴다. 색인은 이번 실행분과 그 Issuer 디렉터리에 이미 공표된 문서를 모두 담는다(범위를 나눠 실행해도 앞 실행의 이름이 지워지지 않는다).
-- 공표는 `resolve.Dir.Publish`다. 내용이 같으면 새 버전을 만들지 않는다. 도구 커밋이 바뀌면 TRANSFORMED-BY가 바뀌어 새 버전이 된다.
+- 공표는 개발 기간 동안 `resolve.Dir.Overwrite`다(2026-10-26 결정): 실행할 때마다 v1을 덮어쓰고 버전 목록도 v1 하나만 둔다. 버전을 쌓으면 용량을 감당할 수 없기 때문이다. 내용이 같으면 아무 파일도 바꾸지 않는다. 형식이 안정되면 `Publish`(버전 누적)로 돌아간다.
 
 ## 값 변환
 
@@ -111,5 +113,6 @@ go run ./cmd/wikiport -root ../.. -from 1 -to 1000 -commit "$(git rev-parse HEAD
 | quantity, monolingualtext, globecoordinate 등 | 건너뜀 (이번 범위 밖) |
 
 - 레이블·별칭은 UTF8-NFC-TEXT, 언어는 LANGUAGE-BCP47-CODE.
-- 클레임은 STATEMENT(Edge Id, Predicate, Subject, Object, Rank). qualifier와 출처는 담지 않는다.
+- 클레임은 TRIPLE(Edge Id, Predicate, Subject, Object, Rank)이고, 그 qualifier는 바로 뒤에 QUALIFIER(Edge Id, Property, 대상 TRIPLE의 Edge Id, Value)로 잇는다. qualifier 값은 본 값과 같은 규칙으로 바꾼다(날짜 원문 보존 포함). 출처는 담지 않는다(DB에 없다).
+- qualifier 순서는 `triple_qualifiers`의 물리 행 순서(ctid)다. 같은 속성 안의 순서는 원본과 같지만 속성 사이 순서는 원본이 아니다(위 빈칸).
 - TRANSFORMED-BY는 임시로 URI Value + 버전 텍스트다. 용어 정의 문서(문서 ID 0 색인)가 생기면 EXTERNAL-ISSUER로 바꾼다.

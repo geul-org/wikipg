@@ -1,5 +1,5 @@
 //ff:func feature=port type=encoder control=sequence
-//ff:what TestBuildDoc — a full document passes schema with its DOC-ID and counts; a bad ID and a bad Issuer fail
+//ff:what TestBuildDoc — a full document with a TRIPLE and its QUALIFIER passes schema with its DOC-ID and counts; a bad ID and a bad Issuer fail
 package port
 
 import (
@@ -17,17 +17,20 @@ func TestBuildDoc(t *testing.T) {
 		ID:      "Q42",
 		Labels:  []source.Text{{Lang: "en", Value: "Douglas Adams"}},
 		Aliases: []source.Text{{Lang: "en", Value: "DNA"}},
-		Claims:  []source.Claim{{Property: "P31", Type: "wikibase-entityid", Value: "Q5", Rank: "normal"}, {Property: "P2", Type: "quantity", Rank: "normal", Value: "{}"}},
+		Claims: []source.Claim{
+			{Property: "P31", Type: "wikibase-entityid", Value: "Q5", Rank: "normal", Qualifiers: []source.Qualifier{{Property: "P642", Type: "wikibase-entityid", Value: `{"id":"Q1"}`}}},
+			{Property: "P2", Type: "quantity", Rank: "normal", Value: "{}"},
+		},
 	}
 	b, rep, err := BuildDoc(e, []core.Word{1, 0}, prov())
-	if err != nil || rep.Labels != 1 || rep.Aliases != 1 || rep.Statements != 1 || rep.Skipped["형식 미지원: quantity"] != 1 {
+	if err != nil || rep.Labels != 1 || rep.Aliases != 1 || rep.Triples != 1 || rep.Qualifiers != 1 || rep.Skipped["형식 미지원: quantity"] != 1 {
 		t.Fatalf("report %+v %v", rep, err)
 	}
 	if fs := schema.Check(b, schema.Options{}).Facts; len(fs) != 0 {
 		t.Fatalf("schema: %+v", fs)
 	}
 	d, _ := inspect.Decode(b)
-	if len(d.Body) != 3 || d.Body[2].ID != 3 {
+	if len(d.Body) != 4 || d.Body[2].ID != 3 || d.Body[3].ID != 4 {
 		t.Fatalf("body %+v", d.Body)
 	}
 	if _, _, err := BuildDoc(source.Entity{ID: "L1"}, []core.Word{1, 0}, prov()); err == nil {

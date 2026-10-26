@@ -1,10 +1,10 @@
 //ff:func feature=port type=helper control=selection
-//ff:what rankWord — the STATEMENT rank code of a Wikidata rank: normal 0, preferred 1, deprecated 2; false for others
+//ff:what rankWord — the TRIPLE rank code of a Wikidata rank: normal 0, preferred 1, deprecated 2; false for others
 package port
 
 import "github.com/geul-org/geul/go/pkg/core"
 
-// rankWord maps a Wikidata rank to the STATEMENT rank code (proposal ENUM):
+// rankWord maps a Wikidata rank to the TRIPLE rank code (edge/TRIPLE ENUM):
 // normal 0, preferred 1, deprecated 2.
 func rankWord(rank string) (core.Word, bool) {
 	switch rank {

@@ -1,5 +1,5 @@
 //ff:func feature=port type=encoder control=iteration dimension=1
-//ff:what statementEdges — one STATEMENT Edge per convertible claim, Edge Ids from next; skipped claims counted by reason
+//ff:what tripleEdges — a TRIPLE and then its QUALIFIERs per convertible claim, Edge Ids from next; skipped claims counted by reason
 package port
 
 import (
@@ -8,12 +8,13 @@ import (
 	"github.com/geul-org/geul-dev/wiki/go/internal/source"
 )
 
-// statementEdges builds a STATEMENT on subject for each claim whose predicate,
-// value and rank convert, numbering Edge Ids from *next. Every other claim is
+// tripleEdges builds a TRIPLE on subject for each claim whose predicate,
+// value and rank convert, each followed by its QUALIFIERs (qualifierEdges),
+// numbering Edge Ids from *next. Every other claim is
 // counted in rep.Skipped by reason, a date kept as original text in rep.Raw
 // by its conversion reason (claimObject), and every property used as a predicate or
 // a value is added to rep.Properties.
-func statementEdges(next *uint64, subject core.Record, claims []source.Claim, rep *Report) []core.Record {
+func tripleEdges(next *uint64, subject core.Record, claims []source.Claim, rep *Report) []core.Record {
 	var out []core.Record
 	for _, c := range claims {
 		pred, okPred := entityRef(c.Property)
@@ -33,8 +34,11 @@ func statementEdges(next *uint64, subject core.Record, claims []source.Claim, re
 			rep.Raw[raw]++
 		}
 		rep.Properties = append(rep.Properties, propertiesOf(c)...)
-		out = append(out, statementEdge(*next, pred, subject, obj, rank))
+		id := *next
+		out = append(out, tripleEdge(id, pred, subject, obj, rank))
 		*next++
+		rep.Triples++
+		out = append(out, qualifierEdges(next, id, c.Qualifiers, rep)...)
 	}
 	return out
 }
