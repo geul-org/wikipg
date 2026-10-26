@@ -26,9 +26,10 @@ func BuildDoc(e source.Entity, issuer []core.Word, p Provenance) ([]byte, Report
 		return nil, rep, err
 	}
 	next := uint64(1)
-	body := textEdges(edgeLabel, &next, subject, e.Labels)
-	body = append(body, textEdges(edgeAlias, &next, subject, e.Aliases)...)
+	labels := textEdges(edgeLabel, &next, subject, e.Labels, &rep)
+	aliases := textEdges(edgeAlias, &next, subject, e.Aliases, &rep)
+	body := append(labels, aliases...)
 	body = append(body, tripleEdges(&next, subject, e.Claims, &rep)...)
-	rep.Labels, rep.Aliases = len(e.Labels), len(e.Aliases)
+	rep.Labels, rep.Aliases = len(labels), len(aliases)
 	return document(head, body), rep, nil
 }

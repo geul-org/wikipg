@@ -1,5 +1,5 @@
 //ff:func feature=port type=encoder control=selection
-//ff:what objectRecord — the GEUL object record of a claim value; otherwise the reason the claim is skipped
+//ff:what objectRecord — the GEUL object record of a claim value (entity, string, time, monolingual text); otherwise the reason the claim is skipped
 package port
 
 import (
@@ -12,8 +12,10 @@ import (
 
 // objectRecord converts the value of c: an entity ID to its Reference
 // (entityRef), a string or external ID to UTF8-TEXT, a time to GREGORIAN-DATE,
-// EDTF or GEDCOM-DATE (timeRecord). A time timeRecord cannot convert has a
-// "time: …" reason; claimObject keeps it as original text. An empty value is a novalue or somevalue snak. Other value
+// EDTF or GEDCOM-DATE (timeRecord), a monolingualtext to UTF8-LANGUAGE-TEXT
+// (monolingualRecord). A time timeRecord cannot convert has a "time: …"
+// reason; claimObject keeps it as original text. An empty value is a novalue
+// or somevalue snak. Other value
 // types are not converted in this pass (wiki/README 작업 범위); the reason
 // names what was skipped.
 func objectRecord(c source.Claim) (core.Record, string) {
@@ -33,6 +35,8 @@ func objectRecord(c source.Claim) (core.Record, string) {
 		return core.EncodeBytesValue(core.CodecUTF8TextEven, []byte(c.Value)), ""
 	case "time":
 		return timeRecord(c.Value)
+	case "monolingualtext":
+		return monolingualRecord(c.Value)
 	default:
 		return core.Record{}, "형식 미지원: " + c.Type
 	}

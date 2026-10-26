@@ -1,5 +1,5 @@
 //ff:func feature=port type=encoder control=sequence
-//ff:what TestTextEdge — a LABEL is Edge Id, LANGUAGE-BCP47-CODE, Subject and UTF8-NFC-TEXT
+//ff:what TestTextEdge — Edge Id, subject, then the language text (the edge/ALIAS example words); a malformed language is false
 package port
 
 import (
@@ -13,9 +13,12 @@ import (
 
 func TestTextEdge(t *testing.T) {
 	subj, _ := entityRef("Q42")
-	r := textEdge(edgeLabel, 1, subj, source.Text{Lang: "en", Value: "Douglas Adams"})
-	want := []core.Word{0x0088, 1, 0x08C6, 0x656E, 0x00A0, 42, 0x0BC3, 0x446F, 0x7567, 0x6C61, 0x7320, 0x4164, 0x616D, 0x7300}
-	if r.Kind != core.KindEdge || r.Codec != edgeLabel || !slices.Equal(r.Payload, want) {
-		t.Fatalf("got %04X", r.Payload)
+	r, ok := textEdge(edgeAlias, 3, subj, source.Text{Lang: "en", Value: "DNA"})
+	ws, _ := core.EncodeRecord(r)
+	if !ok || !slices.Equal(ws, []core.Word{0x1485, 0x0088, 0x0003, 0x00A0, 0x002A, 0x0A4B, 0x08C6, 0x656E, 0x444E, 0x4100}) {
+		t.Fatalf("got %04X", ws)
+	}
+	if _, ok := textEdge(edgeLabel, 1, subj, source.Text{Lang: "x y", Value: "z"}); ok {
+		t.Fatal("bad language: want false")
 	}
 }

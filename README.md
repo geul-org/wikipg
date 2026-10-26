@@ -110,9 +110,10 @@ go run ./cmd/wikiport -root ../.. -from 1 -to 1000 -commit "$(git rev-parse HEAD
 | time, 율리우스력 일·월·연 정밀도 | GEDCOM-DATE (`JULIAN 14 OCT 1066`) |
 | time, 그 밖(세기 이상 정밀도, 시간대·오차 범위 등) | datavalue JSON 원문을 UTF8-TEXT로. 날짜는 건너뛰지 않는다 |
 | novalue, somevalue | 건너뜀 (DB에 값이 비어 있다) |
-| quantity, monolingualtext, globecoordinate 등 | 건너뜀 (이번 범위 밖) |
+| monolingualtext | UTF8-LANGUAGE-TEXT (언어는 LANGUAGE-BCP47-CODE). 언어 코드가 BCP 47 형식이 아니면 건너뜀 |
+| quantity, globecoordinate 등 | 건너뜀 (이번 범위 밖) |
 
-- 레이블·별칭은 UTF8-NFC-TEXT, 언어는 LANGUAGE-BCP47-CODE.
+- 레이블·별칭은 LABEL·ALIAS(Edge Id, Subject, Object)이고 Object는 UTF8-LANGUAGE-TEXT, 언어는 LANGUAGE-BCP47-CODE(GEUL 언어 레지스트리 전). 언어 코드는 BCP 47 형식만 확인한다(위키미디어 고유 코드 `simple` 등도 형식은 통과한다).
 - 클레임은 TRIPLE(Edge Id, Predicate, Subject, Object, Rank)이고, 그 qualifier는 바로 뒤에 QUALIFIER(Edge Id, Property, 대상 TRIPLE의 Edge Id, Value)로 잇는다. qualifier 값은 본 값과 같은 규칙으로 바꾼다(날짜 원문 보존 포함). 출처는 담지 않는다(DB에 없다).
 - qualifier 순서는 `triple_qualifiers`의 물리 행 순서(ctid)다. 같은 속성 안의 순서는 원본과 같지만 속성 사이 순서는 원본이 아니다(위 빈칸).
 - TRANSFORMED-BY는 임시로 URI Value + 버전 텍스트다. 용어 정의 문서(문서 ID 0 색인)가 생기면 EXTERNAL-ISSUER로 바꾼다.
