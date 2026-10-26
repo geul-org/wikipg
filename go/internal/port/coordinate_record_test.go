@@ -1,5 +1,5 @@
 //ff:func feature=port type=encoder control=iteration dimension=1
-//ff:what TestCoordinateRecord — Berlin becomes the docs' COORDINATE-EARTH, Mars a COORDINATE-GEO, no precision unknown; bad JSON, globe, range and precision give reasons
+//ff:what TestCoordinateRecord — Berlin becomes the docs' COORDINATE-EARTH, Mars a COORDINATE-GEO, no precision unknown; bad JSON, globe, altitude, range and precision give reasons
 package port
 
 import (
@@ -28,6 +28,7 @@ func TestCoordinateRecord(t *testing.T) {
 	for want, v := range map[string]string{
 		"globecoordinate: JSON 아님": "{",
 		"globecoordinate: 천체 없음":   `{"latitude":1,"longitude":2,"precision":0.1,"globe":""}`,
+		"globecoordinate: 고도":      `{"latitude":1,"longitude":2,"altitude":120,"precision":0.1,"globe":"` + e + `Q2"}`,
 		"globecoordinate: 범위":      `{"latitude":1,"longitude":200,"precision":0.1,"globe":"` + e + `Q2"}`,
 		"globecoordinate: 정밀도":     `{"latitude":1,"longitude":2,"precision":-1e-5,"globe":"` + e + `Q2"}`,
 	} {

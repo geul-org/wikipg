@@ -1,5 +1,5 @@
 //ff:func feature=source type=loader control=sequence
-//ff:what loadEntityWith — an entity's labels, aliases, claims and their qualifiers by the given queries; false when the ID was never loaded
+//ff:what loadEntityWith — an entity's labels, descriptions, aliases, claims and their qualifiers by the given queries; false when the ID was never loaded
 package source
 
 import (
@@ -8,8 +8,8 @@ import (
 	"github.com/lib/pq"
 )
 
-// loadEntityWith reads the entity id by q: existence, then labels and aliases
-// in langs, then claims with their qualifiers (attachQualifiers). It is false, with no error, when the entity does not
+// loadEntityWith reads the entity id by q: existence, then labels, descriptions and
+// aliases in langs, then claims with their qualifiers (attachQualifiers). It is false, with no error, when the entity does not
 // exist.
 func loadEntityWith(db *sql.DB, q entityQueries, id string, langs []string) (Entity, bool, error) {
 	ok, err := entityExists(db, q.Exists, id)
@@ -18,6 +18,9 @@ func loadEntityWith(db *sql.DB, q entityQueries, id string, langs []string) (Ent
 	}
 	e := Entity{ID: id}
 	if e.Labels, err = loadTexts(db, q.Labels, id, pq.Array(langs)); err != nil {
+		return Entity{}, false, err
+	}
+	if e.Descriptions, err = loadTexts(db, q.Descriptions, id, pq.Array(langs)); err != nil {
 		return Entity{}, false, err
 	}
 	if e.Aliases, err = loadTexts(db, q.Aliases, id, pq.Array(langs)); err != nil {

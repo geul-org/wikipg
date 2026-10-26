@@ -9,7 +9,7 @@ import (
 
 func TestDefaultQueries(t *testing.T) {
 	q := defaultQueries()
-	if q.Exists == "" || !strings.Contains(q.Labels, "ORDER BY") || !strings.Contains(q.Aliases, "alias_order") || !strings.Contains(q.Claims, "ORDER BY id") || !strings.Contains(q.Qualifiers, "ctid") {
+	if q.Exists == "" || !strings.Contains(q.Labels, "ORDER BY") || !strings.Contains(q.Descriptions, "entity_descriptions") || !strings.Contains(q.Aliases, "alias_order") || !strings.Contains(q.Claims, "ORDER BY id") || !strings.Contains(q.Qualifiers, "ctid") {
 		t.Fatalf("got %+v", q)
 	}
 }

@@ -15,6 +15,18 @@
 | 적재 도구 | `github.com/geul-org/geul-entity` `artifacts/wikidata/postgres.go`, 커밋 `4225b3b4297796a79e95c4cda5aa54df3acc4069` |
 | 적재 입력 | `/mnt/d/latest-all.json`(압축을 푼 파일). 지금은 없다(소실). 보관 파일과 같은 덤프로 본다 |
 
+### 새 덤프 (20261019, 적재 전)
+
+다음 적재(wikiload, 스키마 `wikidata`)에 쓸 판본이다. 위 20250908 DB와 달리 판본·해시를 추정하지 않는다.
+
+| 항목 | 값 |
+|---|---|
+| 덤프 | Wikidata JSON 전체 덤프 **20261019** (`wikidata-20261019-all.json.bz2`) |
+| 보관 파일 | `/mnt/d/geul/wikidata/wikidata-20261019-all.json.bz2`, 103,488,697,311 byte, 받기 완료 2026-10-26 15:34 (KST), your.org 미러 |
+| MD5 | `cfec3f8ab5fd8f6f0b70f58c590a02da` (공식 `md5sums`와 일치) |
+| SHA-1 | `a05b8b809ab80576da6d838c67138ddf401055e6` (공식 `sha1sums`와 일치) |
+| SHA-256 | `a249a19d12b1b0e8443248da3583090682be3f20c6bdd6ed1f7e1ae05b6b0774` (직접 계산, 같은 폴더 `.sha256`) |
+
 ### 판본 판단 근거
 
 - 파일 이름이 `latest-all.json.bz2`라 이름만으로는 판본을 알 수 없다. 덤프 사이트는 최근 판만 남겨 2025년 판의 크기·해시를 대조할 수 없었다.
@@ -63,10 +75,10 @@
 - **문서 ID:** QID·PID의 숫자 부분과 같다(Q42 → `0x000000000000002a`). Issuer가 나뉘어 Q와 P의 같은 숫자가 겹치지 않는다.
 - **문서 단위:** QID 하나당 `.geul` 문서 하나.
 - **대상:** 우선 Q1 ~ Q1000. PID는 필요한 만큼 추가한다.
-- **레코드:** LABEL, ALIAS, TRIPLE과 그 QUALIFIER를 작성한다.
-- **값:** 항목(QID), 문자열, 외부 ID, **날짜**까지. 날짜의 정밀도·달력(율리우스력 등) 문제는 작업하면서 해결책을 함께 찾는다. 그 밖의 값 형식은 변환하지 않았다고 기록한다.
+- **레코드:** LABEL, DESCRIPTION, ALIAS, TRIPLE과 그 QUALIFIER를 작성한다(이 순서).
+- **값:** 항목(QID), 문자열, 외부 ID, 날짜, monolingualtext, 좌표(아래 값 변환 표). 처음 범위는 날짜까지였고 2026-10-26에 monolingualtext·좌표를 더했다. 그 밖의 값 형식(quantity 등)은 변환하지 않았다고 기록한다.
 - **언어:** ko, en.
-- **명세:** 아직 없는 명세는 설계하면서 제안하고 검토를 받는다(ALIAS, TRIPLE, QUALIFIER는 docs/edge에 반영).
+- **명세:** 아직 없는 명세는 설계하면서 제안하고 검토를 받는다(ALIAS, DESCRIPTION, TRIPLE, QUALIFIER는 docs/edge에 반영).
 
 ## 출처 기록 (초기 최소 세트, files/geul/legacy.md)
 
@@ -90,13 +102,29 @@ go run ./cmd/wikiport -root ../.. -from 1 -to 1000 -commit "$(git rev-parse HEAD
 |---|---|---|
 | `-root` | `.well-known/geul`을 담은 t002 루트 | `.` |
 | `-from`, `-to` | QID 범위 | 1, 1000 |
-| `-langs` | 레이블·별칭 언어 | `ko,en` |
+| `-langs` | 레이블·설명·별칭 언어 | `ko,en` |
 | `-commit` | TRANSFORMED-BY에 남길 포팅 도구 커밋 (필수) | |
-| `-report` | 개체별 건수·건너뛴 사유·원문 보존 날짜의 사유 TSV (열: id, labels, aliases, triples, qualifiers, skipped, raw. qualifier 사유는 `qualifier ` 접두) | 없음 |
+| `-report` | 개체별 건수·건너뛴 사유·원문 보존 날짜의 사유 TSV (열: id, labels, descriptions, aliases, triples, qualifiers, skipped, raw. qualifier 사유는 `qualifier ` 접두) | 없음 |
 | `-dsn` | PostgreSQL DSN | 비우면 PG* 환경변수 |
 
 - Q 범위를 먼저 옮기고, 그 문서들이 쓴 속성(Predicate, 값이 속성 개체인 것)을 이어서 옮긴 뒤 두 Issuer의 `documents.geul`을 쓴다. 색인은 이번 실행분과 그 Issuer 디렉터리에 이미 공표된 문서를 모두 담는다(범위를 나눠 실행해도 앞 실행의 이름이 지워지지 않는다).
 - 공표는 개발 기간 동안 `resolve.Dir.Overwrite`다(2026-10-26 결정): 실행할 때마다 v1을 덮어쓰고 버전 목록도 v1 하나만 둔다. 버전을 쌓으면 용량을 감당할 수 없기 때문이다. 내용이 같으면 아무 파일도 바꾸지 않는다. 형식이 안정되면 `Publish`(버전 누적)로 돌아간다.
+
+## 적재 도구 (`wiki/go`, wikiload)
+
+덤프를 PostgreSQL 스키마 `wikidata`(`wiki/wikidata.sql`)에 적재한다. 기존 `geuldev.public`(geul-entity `postgres.go`)을 대신하며 기존 테이블은 건드리지 않는다. 원칙과 기존 스키마 대비 개선은 `wikidata.sql` 머리말에 있다.
+
+```sh
+cd draft/t002/wiki/go
+go run ./cmd/wikiload -in /mnt/d/geul/wikidata/wikidata-20261019-all.json.bz2 -commit "$(git rev-parse HEAD)"
+```
+
+- 스키마: `wikidata.sql`의 1~3절(타입·테이블)만 먼저 실행하고, 4절(재개 정리·출처 중복 정리·제약·색인)은 적재를 마친 뒤 실행한다. 파일 전체를 한 번에 돌리지 않는다.
+- 테이블: `dump`(파일·URL·크기·MD5·SHA-1·SHA-256·적재 도구 커밋), `entity_raw`(덤프 줄 원문), `load_error`, `entity`, `label`, `description`, `alias`, `sitelink`, `statement`, `qualifier`, `reference`, `statement_reference`, `reference_snak`. 개체 단위 테이블은 모두 `dump_id`를 가진다.
+- 기본값은 기계를 30% 남긴다: CPU 70% 중 1/5 압축 해제(lbzip2), 2/5 JSON 파싱, 작성자(DB 연결) 4, 배치 8 MiB(메모리 약 1 GB). 2026-10-26 측정에서 작성자 4·8 MiB가 가장 빨랐다.
+- 체크포인트에서 이어 읽는다(`-from-line 0`). 언어는 `-langs`(기본 `ko,en`, `all`은 전부).
+- 플래그 전체: `go run ./cmd/wikiload -h`.
+- wikiport는 아직 `geuldev.public`을 읽는다. 새 스키마를 읽게 바꾸는 일은 적재 뒤에 한다.
 
 ## 값 변환
 
@@ -111,14 +139,14 @@ go run ./cmd/wikiport -root ../.. -from 1 -to 1000 -commit "$(git rev-parse HEAD
 | time, 그 밖(세기 이상 정밀도, 시간대·오차 범위 등) | datavalue JSON 원문을 UTF8-TEXT로. 날짜는 건너뛰지 않는다 |
 | novalue, somevalue | 건너뜀 (DB에 값이 비어 있다) |
 | monolingualtext | UTF8-LANGUAGE-TEXT (언어는 LANGUAGE-BCP47-CODE, 아래 언어 코드 대응). 그래도 BCP 47 형식이 아니면(빈 언어) datavalue 원문을 UTF8-TEXT로 |
-| globecoordinate | 지구(Q2)는 COORDINATE-EARTH, 다른 천체는 COORDINATE-GEO(천체 = WIKIDATA-QID). 지구 좌표의 불확도는 precision에서 Georeferencing Best Practices 3.4.3 방법으로(정밀도 기인 불확도의 하한), 다른 천체와 precision 없음은 미상. 천체 없음·범위 밖·이상한 precision은 datavalue 원문을 UTF8-TEXT로 |
+| globecoordinate | 지구(Q2)는 COORDINATE-EARTH, 다른 천체는 COORDINATE-GEO(천체 = WIKIDATA-QID). 지구 좌표의 불확도는 precision에서 Georeferencing Best Practices 3.4.3 방법으로(정밀도 기인 불확도의 하한), 다른 천체와 precision 없음은 미상. 천체 없음·고도 있음·범위 밖·이상한 precision은 datavalue 원문을 UTF8-TEXT로 |
 | quantity 등 | 건너뜀 (이번 범위 밖) |
 
-- 레이블·별칭은 LABEL·ALIAS(Edge Id, Subject, Object)이고 Object는 UTF8-LANGUAGE-TEXT, 언어는 LANGUAGE-BCP47-CODE(GEUL 언어 레지스트리 전). 언어 코드는 BCP 47 형식만 확인한다.
+- 레이블·설명·별칭은 LABEL·DESCRIPTION·ALIAS(Edge Id, Subject, Object, `entity_descriptions`의 빈 설명은 건너뜀)이고 Object는 UTF8-LANGUAGE-TEXT, 언어는 LANGUAGE-BCP47-CODE(GEUL 언어 레지스트리 전). 언어 코드는 BCP 47 형식만 확인한다.
 
 ### 언어 코드 대응
 
-위키미디어 언어 코드 중 BCP 47이 아닌 14개는 BCP 47 tag로 옮긴다(2026-10-26 기존 DB 전수조사에서 레이블·별칭·설명·monolingualtext의 무효 코드 전부, 대소문자 무시). 근거는 IANA Language Subtag Registry 항목이고 MediaWiki `LanguageCode.php`와는 대조만 했다.
+위키미디어 언어 코드 중 BCP 47이 아닌 14개는 BCP 47 tag로 옮긴다(2026-10-26 기존 DB 전수조사에서 레이블·별칭·설명·monolingualtext의 무효 코드 전부, 대소문자 무시). 근거는 IANA Language Subtag Registry 항목이고(File-Date 2026-09-17, 2026-10-26 확보. IANA 프로토콜 레지스트리라 CC0 1.0, [IANA·IETF 공동 성명 2021-11-10](https://www.iana.org/help/licensing-terms)) MediaWiki `LanguageCode.php`와는 대조만 했다.
 
 | 위키미디어 | BCP 47 | | 위키미디어 | BCP 47 |
 |---|---|---|---|---|
@@ -132,7 +160,7 @@ go run ./cmd/wikiport -root ../.. -from 1 -to 1000 -commit "$(git rev-parse HEAD
 | `zh-classical` | `lzh` | | | |
 
 - 사설 확장(`x-`)의 뜻: `x-formal` 존댓말(격식체), `x-informal` 반말(비격식체), `x-bms` 자바어 반유마스 방언, `x-tara` 나폴리어 타란토 방언.
-- 표에 없고 BCP 47 형식도 아닌 코드(빈 언어 등)는 레이블·별칭이면 건너뛰고(보고서 `skipped`), monolingualtext면 원문 UTF8-TEXT로 보존한다(보고서 `raw`).
+- 표에 없고 BCP 47 형식도 아닌 코드(빈 언어 등)는 레이블·설명·별칭이면 건너뛰고(보고서 `skipped`), monolingualtext면 원문 UTF8-TEXT로 보존한다(보고서 `raw`).
 - 클레임은 TRIPLE(Edge Id, Predicate, Subject, Object, Rank)이고, 그 qualifier는 바로 뒤에 QUALIFIER(Edge Id, Property, 대상 TRIPLE의 Edge Id, Value)로 잇는다. qualifier 값은 본 값과 같은 규칙으로 바꾼다(날짜 원문 보존 포함). 출처는 담지 않는다(DB에 없다).
 - qualifier 순서는 `triple_qualifiers`의 물리 행 순서(ctid)다. 같은 속성 안의 순서는 원본과 같지만 속성 사이 순서는 원본이 아니다(위 빈칸).
 - TRANSFORMED-BY는 임시로 URI Value + 버전 텍스트다. 용어 정의 문서(문서 ID 0 색인)가 생기면 EXTERNAL-ISSUER로 바꾼다.

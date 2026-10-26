@@ -2,12 +2,14 @@
 //ff:what codes — the GEUL codes this porter writes that the library does not name, and the Wikidata constants it reads
 package port
 
-// Codes the GEUL library (core) has no constant for: edge/ALIAS, edge/TRIPLE,
+// Codes the GEUL library (core) has no constant for: edge/ALIAS,
+// edge/DESCRIPTION, edge/TRIPLE,
 // edge/QUALIFIER and the Meta this porter writes in HEAD.
 const (
 	codecURIEven      uint8 = 0x44 // Value URI (even bytes)
 	edgeLabel         uint8 = 0x04 // Edge LABEL
 	edgeAlias         uint8 = 0x05 // Edge ALIAS (edge/ALIAS)
+	edgeDescription   uint8 = 0x06 // Edge DESCRIPTION (edge/DESCRIPTION)
 	edgeTriple        uint8 = 0x0A // Edge TRIPLE (edge/TRIPLE)
 	edgeQualifier     uint8 = 0x0B // Edge QUALIFIER (edge/QUALIFIER)
 	metaSource        uint8 = 0x26 // Meta SOURCE
