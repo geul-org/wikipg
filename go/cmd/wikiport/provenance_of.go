@@ -10,11 +10,11 @@ import (
 )
 
 // wikiloadPath is the loader that wikiload records in the dump row; it lives
-// in this repository, geul.org URL-defined Reference document 1 (wikiport).
+// in this repository, geul.org term definition document 1 (wikiport).
 const wikiloadPath = "github.com/geul-org/wikiport/go/cmd/wikiload"
 
 // provenanceOf is the provenance of dump d (wiki/README 출처 기록): its URL,
-// file SHA-256 and download time, then the tools as geul.org URL-defined Reference
+// file SHA-256 and download time, then the tools as geul.org term definition
 // documents (GEUL-ORG) — loaded by wikiload (document 1) at d's loader commit,
 // ported by wikiport (document 1) at commit with the GEUL library (document
 // 2) at libCommit. A loader other than wikiload is an error: its Reference

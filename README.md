@@ -95,7 +95,7 @@ wikiload로 geuldev의 스키마 `wikidata`에 적재할 판본이다. 위 20250
 
 - 출처: SOURCE 둘. 덤프 URI + 덤프 파일 SHA-256(`dump.sha256`, SHA-256-DIGEST), 그 항목의 QID + 없음 표지 `0x0000`(항목 단위 다이제스트는 없다, docs/edge/CODEC 선택 필드). 덤프 SHA-256을 모르면 없음 표지
 - 받은 시각: `dump.downloaded_at`
-- 변환 도구: TRANSFORMED-BY 셋(docs/meta/lineage/TRANSFORMED-BY). 도구 Reference는 geul.org URL 정의 Reference 문서(GEUL-ORG), 버전은 전체 커밋 ID(SHA1-DIGEST)다.
+- 변환 도구: TRANSFORMED-BY 셋(docs/meta/lineage/TRANSFORMED-BY). 도구 Reference는 geul.org 용어 정의 문서(ISSUER 용어 정의, 도구 하나에 문서 하나), 버전은 전체 커밋 ID(SHA1-DIGEST)다.
   - 적재 도구 wikiload(wikiport 저장소, `0x0001000000000001`) `dump.loader_commit`. 다른 적재 도구로 채운 dump는 거부한다
   - (이전 0908 판의 적재 도구 geul-entity `0x0001000000000003` `4225b3b4297796a79e95c4cda5aa54df3acc4069`)
   - 포팅 도구 wikiport(`0x0001000000000001`) `-commit`
@@ -188,4 +188,4 @@ go run ./cmd/wikiload -in /mnt/d/geul/wikidata/wikidata-20261019-all.json.bz2 -c
   어휘는 위키데이터 RDF의 Wikibase 온톨로지 이름 그대로다(18종, files/geul/wikidata-datatype-mapping.md). 모르는 데이터 타입은 쓰지 않고 보고서 `skipped`에 남긴다. 문서당 약 50 WORD.
 - 클레임은 TRIPLE(Edge Id, Predicate, Subject, Object, Rank)이고, 그 qualifier는 바로 뒤에 QUALIFIER(Edge Id, Property, 대상 TRIPLE의 Edge Id, Value)로 잇는다. qualifier 값은 본 값과 같은 규칙으로 바꾼다(날짜 원문 보존 포함). 출처는 담지 않는다(DB에 없다).
 - qualifier 순서는 `triple_qualifiers`의 물리 행 순서(ctid)다. 같은 속성 안의 순서는 원본과 같지만 속성 사이 순서는 원본이 아니다(위 빈칸).
-- TRANSFORMED-BY는 도구 Reference(EXTERNAL-ISSUER-1WORD, geul.org URL 정의 Reference 문서의 LOCAL 2) + 커밋 SHA1-DIGEST다(2026-10-26). 커밋은 커밋된 소스여야 한다: 작업 트리에 커밋되지 않은 변경이 있으면 그 커밋 ID를 쓰지 말고 먼저 커밋한다(도구는 아직 검사하지 않는다).
+- TRANSFORMED-BY는 도구 Reference(EXTERNAL-ISSUER-1WORD, geul.org 용어 정의 문서의 LOCAL 2) + 커밋 SHA1-DIGEST다(2026-10-26). 커밋은 커밋된 소스여야 한다: 작업 트리에 커밋되지 않은 변경이 있으면 그 커밋 ID를 쓰지 말고 먼저 커밋한다(도구는 아직 검사하지 않는다).
