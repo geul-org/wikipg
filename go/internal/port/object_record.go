@@ -1,20 +1,19 @@
 //ff:func feature=port type=encoder control=selection
-//ff:what objectRecord — the GEUL object record of a claim value (entity, string, time, monolingual text, coordinate); otherwise the reason the claim is skipped
+//ff:what objectRecord — the GEUL object record of a claim value (entity, string or URI, time, monolingual text, coordinate); otherwise the reason the claim is skipped
 package port
 
 import (
-	"unicode/utf8"
-
 	"github.com/geul-org/geul/go/pkg/core"
 
 	"github.com/geul-org/wikiport/go/internal/source"
 )
 
 // objectRecord converts the value of c: an entity ID to its Reference
-// (entityRef), a string or external ID to UTF8-TEXT, a time to GREGORIAN-DATE,
+// (entityRef), a string by its datatype (stringRecord: URI for url and
+// Commons pages, else UTF8-TEXT), a time to GREGORIAN-DATE,
 // EDTF or GEDCOM-DATE (timeRecord), a monolingualtext to UTF8-LANGUAGE-TEXT
 // (monolingualRecord), a globecoordinate to COORDINATE-EARTH or -GEO
-// (coordinateRecord). A time or coordinate that cannot be converted has a
+// (coordinateRecord), a quantity to QUANTITY (quantityRecord). A time or coordinate that cannot be converted has a
 // "time: …" or "globecoordinate: …" reason; claimObject keeps it as original
 // text. An empty value is a novalue
 // or somevalue snak. Other value
@@ -31,16 +30,15 @@ func objectRecord(c source.Claim) (core.Record, string) {
 		}
 		return core.Record{}, "개체: " + c.Value[:1]
 	case "string", "external-id":
-		if !utf8.ValidString(c.Value) {
-			return core.Record{}, "문자열: UTF-8 아님"
-		}
-		return core.EncodeBytesValue(core.CodecUTF8TextEven, []byte(c.Value)), ""
+		return stringRecord(c)
 	case "time":
 		return timeRecord(c.Value)
 	case "monolingualtext":
 		return monolingualRecord(c.Value)
 	case "globecoordinate", "globe-coordinate":
 		return coordinateRecord(c.Value)
+	case "quantity":
+		return quantityRecord(c.Value)
 	default:
 		return core.Record{}, "형식 미지원: " + c.Type
 	}

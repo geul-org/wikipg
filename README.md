@@ -80,7 +80,7 @@ wikiload로 geuldev의 스키마 `wikidata`에 적재할 판본이다. 위 20250
 - **문서 단위:** QID 하나당 `.geul` 문서 하나.
 - **대상:** 우선 Q1 ~ Q1000. PID는 필요한 만큼 추가한다.
 - **레코드:** LABEL, DESCRIPTION, ALIAS, TRIPLE과 그 QUALIFIER를 작성한다(이 순서).
-- **값:** 항목(QID), 문자열, 외부 ID, 날짜, monolingualtext, 좌표(아래 값 변환 표). 처음 범위는 날짜까지였고 2026-10-26에 monolingualtext·좌표를 더했다. 그 밖의 값 형식(quantity 등)은 변환하지 않았다고 기록한다.
+- **값:** 항목(QID), 문자열, 외부 ID, URL·커먼즈(URI), 날짜, monolingualtext, 좌표, 수량(아래 값 변환 표). 처음 범위는 날짜까지였고 2026-10-26에 monolingualtext·좌표·URI·수량을 더했다. 그 밖의 값(Lexeme 등)은 변환하지 않았다고 기록한다.
 - **언어:** ko, en.
 - **명세:** 아직 없는 명세는 설계하면서 제안하고 검토를 받는다(ALIAS, DESCRIPTION, TRIPLE, QUALIFIER는 docs/edge에 반영).
 
@@ -141,7 +141,10 @@ go run ./cmd/wikiload -in /mnt/d/geul/wikidata/wikidata-20261019-all.json.bz2 -c
 |---|---|
 | 항목 `Q…`, 속성 `P…` | WIKIDATA-QID, WIKIDATA-PID Reference |
 | Lexeme `L…`, EntitySchema `E…` | 건너뜀 (Reference Codec 없음) |
-| string, external-id | UTF8-TEXT |
+| string, external-id, math, musical-notation | UTF8-TEXT (external-id는 식별자 텍스트 그대로, 2026-10-26 결정) |
+| url | URI. 비ASCII·URI에 못 쓰는 바이트는 퍼센트 인코딩(RFC 3987 3.1, 되돌릴 수 있다). 스킴이 없으면 원문 UTF8-TEXT |
+| commonsMedia | URI `https://commons.wikimedia.org/wiki/File:` + 파일 이름(공백 → `_`, 한 경로 조각으로 퍼센트 인코딩). 주소 앞부분은 wikiport가 붙인다 |
+| geo-shape, tabular-data | URI `https://commons.wikimedia.org/wiki/` + 페이지 이름(`Data:…`), 위와 같은 인코딩 |
 | time, 그레고리력 일 정밀도(기원전 포함) | GREGORIAN-DATE |
 | time, 그레고리력 월·연·10년 정밀도 | EDTF |
 | time, 율리우스력 일·월·연 정밀도 | GEDCOM-DATE (`JULIAN 14 OCT 1066`) |
@@ -149,7 +152,8 @@ go run ./cmd/wikiload -in /mnt/d/geul/wikidata/wikidata-20261019-all.json.bz2 -c
 | novalue, somevalue | 건너뜀 (DB에 값이 비어 있다) |
 | monolingualtext | UTF8-LANGUAGE-TEXT (언어는 LANGUAGE-BCP47-CODE, 아래 언어 코드 대응). 그래도 BCP 47 형식이 아니면(빈 언어) datavalue 원문을 UTF8-TEXT로 |
 | globecoordinate | 지구(Q2)는 COORDINATE-EARTH, 다른 천체는 COORDINATE-GEO(천체 = WIKIDATA-QID). 지구 좌표의 불확도는 precision에서 Georeferencing Best Practices 3.4.3 방법으로(정밀도 기인 불확도의 하한), 다른 천체와 precision 없음은 미상. 천체 없음·고도 있음·범위 밖·이상한 precision은 datavalue 원문을 UTF8-TEXT로 |
-| quantity 등 | 건너뜀 (이번 범위 밖) |
+| quantity | QUANTITY(amount·단위·하한·상한, docs/value/numeric/QUANTITY). 수와 경계는 자릿수 그대로, 단위 `1`은 무단위(없음 표지), 위키데이터 항목 단위는 WIKIDATA-QID. 그 밖의 단위·형식은 원문 UTF8-TEXT |
+| 그 밖(Lexeme 값 등) | 건너뜀 (이번 범위 밖) |
 
 - 레이블·설명·별칭은 LABEL·DESCRIPTION·ALIAS(Edge Id, Subject, Object, `entity_descriptions`의 빈 설명은 건너뜀)이고 Object는 UTF8-LANGUAGE-TEXT, 언어는 LANGUAGE-BCP47-CODE(GEUL 언어 레지스트리 전). 언어 코드는 BCP 47 형식만 확인한다.
 

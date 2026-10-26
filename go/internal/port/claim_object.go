@@ -1,5 +1,5 @@
 //ff:func feature=port type=encoder control=sequence
-//ff:what claimObject — objectRecord, but a date, coordinate or monolingual text it cannot convert keeps its original datavalue as UTF8-TEXT and names why
+//ff:what claimObject — objectRecord, but a date, coordinate, monolingual text, url or quantity it cannot convert keeps its original datavalue as UTF8-TEXT and names why
 package port
 
 import (
@@ -12,14 +12,14 @@ import (
 )
 
 // claimObject returns the object record of c (objectRecord) and the reason it
-// is skipped. Every date, coordinate and monolingual text is kept (wiki/README
-// 값 변환): a time, globecoordinate or monolingualtext objectRecord cannot
-// convert becomes its original
+// is skipped. Every date, coordinate, monolingual text, url and quantity is kept (wiki/README
+// 값 변환): a time, globecoordinate, monolingualtext, url or quantity
+// objectRecord cannot convert becomes its original
 // datavalue JSON as UTF8-TEXT, and raw names the conversion reason so the
 // report counts it.
 func claimObject(c source.Claim) (obj core.Record, skip, raw string) {
 	obj, skip = objectRecord(c)
-	kept := strings.HasPrefix(skip, "time: ") || strings.HasPrefix(skip, "globecoordinate: ") || strings.HasPrefix(skip, "monolingualtext: ")
+	kept := strings.HasPrefix(skip, "time: ") || strings.HasPrefix(skip, "globecoordinate: ") || strings.HasPrefix(skip, "monolingualtext: ") || strings.HasPrefix(skip, "url: ") || strings.HasPrefix(skip, "quantity: ")
 	if !kept {
 		return obj, skip, ""
 	}

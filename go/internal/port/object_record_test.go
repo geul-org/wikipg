@@ -1,5 +1,5 @@
 //ff:func feature=port type=encoder control=iteration dimension=1
-//ff:what TestObjectRecord — entity IDs, strings, dates, monolingual texts and coordinates convert; an unconvertible date has its time reason; empty, lexeme, invalid UTF-8 and unsupported values are skipped
+//ff:what TestObjectRecord — entity IDs, strings, dates, monolingual texts and coordinates convert; a url becomes a URI, a quantity a QUANTITY; an unconvertible date has its time reason; empty, lexeme, invalid UTF-8 and unsupported values are skipped
 package port
 
 import (
@@ -23,6 +23,12 @@ func TestObjectRecord(t *testing.T) {
 	if ws := enc(source.Claim{Type: "wikibase-entityid", Value: "Q5"}); !slices.Equal(ws, []core.Word{0x00A0, 5}) {
 		t.Fatalf("item: %04X", ws)
 	}
+	if ws := enc(source.Claim{Type: "quantity", Value: `{"amount":"+1.20","unit":"1"}`}); !slices.Equal(ws, []core.Word{0x0B86, 0x0990, 0xFFFF, 0xFFFE, 0x0078, 0, 0, 0}) {
+		t.Fatalf("quantity: %04X", ws)
+	}
+	if ws := enc(source.Claim{Type: "string", Datatype: "url", Value: "a:b"}); !slices.Equal(ws, []core.Word{0x0945, 0x613A, 0x6200}) {
+		t.Fatalf("url: %04X", ws)
+	}
 	if ws := enc(source.Claim{Type: "string", Value: "ab"}); !slices.Equal(ws, []core.Word{0x08C0, 0x6162}) {
 		t.Fatalf("string: %04X", ws)
 	}
@@ -39,7 +45,7 @@ func TestObjectRecord(t *testing.T) {
 		"값 없음(novalue·somevalue)":    {Type: "wikibase-item"},
 		"개체: L":                      {Type: "wikibase-entityid", Value: "L16"},
 		"문자열: UTF-8 아님":              {Type: "external-id", Value: "\xff"},
-		"형식 미지원: quantity":           {Type: "quantity", Value: "{}"},
+		"형식 미지원: unknown":            {Type: "unknown", Value: "{}"},
 		"monolingualtext: 언어 코드 x y": {Type: "monolingualtext", Value: `{"text":"a","language":"x y"}`},
 		"time: JSON 아님":              {Type: "time", Value: "x"},
 	} {

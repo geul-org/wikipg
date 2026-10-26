@@ -20,11 +20,11 @@ func TestBuildDoc(t *testing.T) {
 		Aliases:      []source.Text{{Lang: "en", Value: "DNA"}},
 		Claims: []source.Claim{
 			{Property: "P31", Type: "wikibase-entityid", Value: "Q5", Rank: "normal", Qualifiers: []source.Qualifier{{Property: "P642", Type: "wikibase-entityid", Value: "Q1"}}},
-			{Property: "P2", Type: "quantity", Rank: "normal", Value: "{}"},
+			{Property: "P2", Type: "unknown", Rank: "normal", Value: "{}"},
 		},
 	}
 	b, rep, err := BuildDoc(e, []core.Word{1, 0}, prov())
-	if err != nil || rep.Labels != 1 || rep.Descriptions != 1 || rep.Aliases != 1 || rep.Triples != 1 || rep.Qualifiers != 1 || rep.Skipped["형식 미지원: quantity"] != 1 {
+	if err != nil || rep.Labels != 1 || rep.Descriptions != 1 || rep.Aliases != 1 || rep.Triples != 1 || rep.Qualifiers != 1 || rep.Skipped["형식 미지원: unknown"] != 1 {
 		t.Fatalf("report %+v %v", rep, err)
 	}
 	if fs := schema.Check(b, schema.Options{}).Facts; len(fs) != 0 {

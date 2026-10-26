@@ -28,6 +28,8 @@ INSERT INTO statement (statement_id, guid, entity_id, property, ordinal, rank, s
   (4204, 'Q42$d', 'Q42', 'P214', 0, 'normal', 'value', 'external-id', 'string', '"113230702"', NULL, 1),
   (4205, 'Q42$e', 'Q42', 'P40', 0, 'normal', 'novalue', 'wikibase-item', NULL, NULL, NULL, 1),
   (4206, 'Q42$f', 'Q42', 'P2067', 0, 'normal', 'value', 'quantity', 'quantity', '{"amount": "+73", "unit": "http://www.wikidata.org/entity/Q11570"}', NULL, 1),
+  (4207, 'Q42$g', 'Q42', 'P856', 0, 'normal', 'value', 'url', 'string', '"https://douglasadams.com/더글러스"', NULL, 1),
+  (4208, 'Q42$h', 'Q42', 'P18', 0, 'normal', 'value', 'commonsMedia', 'string', '"Douglas adams portrait.jpg"', NULL, 1),
   (9901, 'Q99$a', 'Q99', 'P31', 0, 'normal', 'value', 'wikibase-item', 'wikibase-entityid', '{"id": "Q5", "numeric-id": 5, "entity-type": "item"}', 'Q5', 2);
 
 INSERT INTO qualifier (statement_id, ordinal, property, value_ordinal, snaktype, datatype, value_type, value, value_entity) VALUES

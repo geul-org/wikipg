@@ -17,7 +17,7 @@ func TestTripleEdges(t *testing.T) {
 		{Property: "P31", Type: "wikibase-entityid", Value: "Q5", Rank: "normal", Qualifiers: []source.Qualifier{{Property: "P580", Type: "time", Value: "x"}}},
 		{Property: "P1659", Type: "wikibase-entityid", Value: "P279", Rank: "preferred"},
 		{Property: "X1", Type: "string", Value: "a", Rank: "normal"},
-		{Property: "P2", Type: "quantity", Value: "{}", Rank: "normal"},
+		{Property: "P2", Type: "unknown", Value: "{}", Rank: "normal"},
 		{Property: "P3", Type: "string", Value: "a", Rank: "odd"},
 		{Property: "P585", Type: "time", Value: "x", Rank: "normal"},
 	}, &rep)
@@ -27,7 +27,7 @@ func TestTripleEdges(t *testing.T) {
 	if len(rs) != 4 || next != 5 || rs[0].Codec != edgeTriple || rs[1].Codec != edgeQualifier || rs[1].Payload[5] != 1 || rs[2].Payload[len(rs[2].Payload)-1] != 1 {
 		t.Fatalf("got %d next %d", len(rs), next)
 	}
-	if rep.Skipped["속성 ID: X1"] != 1 || rep.Skipped["형식 미지원: quantity"] != 1 || rep.Skipped["rank: odd"] != 1 {
+	if rep.Skipped["속성 ID: X1"] != 1 || rep.Skipped["형식 미지원: unknown"] != 1 || rep.Skipped["rank: odd"] != 1 {
 		t.Fatalf("skipped %v", rep.Skipped)
 	}
 	if !slices.Equal(rep.Properties, []string{"P31", "P580", "P1659", "P279", "P585"}) {

@@ -1,5 +1,5 @@
 //ff:func feature=port type=encoder control=sequence
-//ff:what TestClaimObject — converted values pass through, an unconvertible date, coordinate or monolingual text becomes its original text with the reason, invalid UTF-8 and other skips stay skipped
+//ff:what TestClaimObject — converted values pass through, an unconvertible date, coordinate or monolingual text becomes its original text with the reason, invalid UTF-8 and other skips stay skipped; a schemeless url and a malformed quantity are kept as text
 package port
 
 import (
@@ -29,7 +29,13 @@ func TestClaimObject(t *testing.T) {
 	if _, skip, raw := claimObject(source.Claim{Type: "monolingualtext", Value: `{"text":"x","language":""}`}); skip != "" || raw != "monolingualtext: 언어 코드 " {
 		t.Fatalf("raw monolingual: %q %q", skip, raw)
 	}
-	if _, skip, raw := claimObject(source.Claim{Type: "quantity", Value: "{}"}); skip != "형식 미지원: quantity" || raw != "" {
-		t.Fatalf("quantity: %q %q", skip, raw)
+	if r, skip, raw := claimObject(source.Claim{Type: "string", Datatype: "url", Value: "example.org"}); skip != "" || raw != "url: 스킴 없음" || r.Codec&^1 != core.CodecUTF8TextEven {
+		t.Fatalf("raw url: %q %q", skip, raw)
+	}
+	if r, skip, raw := claimObject(source.Claim{Type: "quantity", Value: `{"amount":"x","unit":"1"}`}); skip != "" || raw != "quantity: 수" || r.Codec&^1 != core.CodecUTF8TextEven {
+		t.Fatalf("raw quantity: %q %q", skip, raw)
+	}
+	if _, skip, raw := claimObject(source.Claim{Type: "unknown", Value: "{}"}); skip != "형식 미지원: unknown" || raw != "" {
+		t.Fatalf("unknown type: %q %q", skip, raw)
 	}
 }

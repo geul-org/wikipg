@@ -20,9 +20,9 @@ func queriesFor(s Store) entityQueries {
 		Labels:       fmt.Sprintf("SELECT language, value FROM %s.label WHERE entity_id = $1 AND dump_id = %d AND language = ANY($2) ORDER BY language", s.Schema, s.Dump),
 		Descriptions: fmt.Sprintf("SELECT language, value FROM %s.description WHERE entity_id = $1 AND dump_id = %d AND language = ANY($2) ORDER BY language", s.Schema, s.Dump),
 		Aliases:      fmt.Sprintf("SELECT language, value FROM %s.alias WHERE entity_id = $1 AND dump_id = %d AND language = ANY($2) ORDER BY language, ordinal", s.Schema, s.Dump),
-		Claims: fmt.Sprintf("SELECT statement_id, property, coalesce(value_type, ''), %s, rank::text FROM %s.statement "+
+		Claims: fmt.Sprintf("SELECT statement_id, property, coalesce(value_type, ''), coalesce(datatype, ''), %s, rank::text FROM %s.statement "+
 			"WHERE entity_id = $1 AND dump_id = %d ORDER BY statement_id", value, s.Schema, s.Dump),
-		Qualifiers: fmt.Sprintf("SELECT statement_id, property, coalesce(value_type, ''), %s FROM %s.qualifier "+
+		Qualifiers: fmt.Sprintf("SELECT statement_id, property, coalesce(value_type, ''), coalesce(datatype, ''), %s FROM %s.qualifier "+
 			"WHERE statement_id = ANY(ARRAY(SELECT statement_id FROM %s.statement WHERE entity_id = $1 AND dump_id = %d)) ORDER BY statement_id, ordinal",
 			value, s.Schema, s.Schema, s.Dump),
 	}

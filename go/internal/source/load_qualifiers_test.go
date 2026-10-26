@@ -11,7 +11,7 @@ func TestLoadQualifiers(t *testing.T) {
 	db, s := fixtureDB(t)
 	q := queriesFor(s).Qualifiers
 	qs, err := loadQualifiers(db, q, "Q42")
-	if err != nil || len(qs) != 3 || qs[0].StatementID != 4201 || qs[0].Property != "P580" || qs[0].Type != "time" || !strings.Contains(qs[0].Value, "+1979-") ||
+	if err != nil || len(qs) != 3 || qs[0].StatementID != 4201 || qs[0].Property != "P580" || qs[0].Type != "time" || qs[0].Datatype != "time" || !strings.Contains(qs[0].Value, "+1979-") ||
 		qs[1].Value != "Q1" || qs[2].Property != "P582" || qs[2].Value != "" {
 		t.Fatalf("got %+v %v", qs, err)
 	}

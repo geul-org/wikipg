@@ -7,7 +7,7 @@ import "testing"
 func TestLoadEntity(t *testing.T) {
 	db, s := fixtureDB(t)
 	e, ok, err := LoadEntity(db, s, "Q42", []string{"ko", "en"})
-	if err != nil || !ok || e.ID != "Q42" || len(e.Labels) != 2 || len(e.Descriptions) != 2 || len(e.Aliases) != 2 || len(e.Claims) != 6 || len(e.Claims[0].Qualifiers) != 3 {
+	if err != nil || !ok || e.ID != "Q42" || len(e.Labels) != 2 || len(e.Descriptions) != 2 || len(e.Aliases) != 2 || len(e.Claims) != 8 || len(e.Claims[0].Qualifiers) != 3 {
 		t.Fatalf("Q42: %v %v %+v", ok, err, e)
 	}
 	if _, ok, err := LoadEntity(db, s, "Q6", []string{"en"}); err != nil || ok {

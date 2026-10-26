@@ -4,7 +4,7 @@ package source
 
 import "database/sql"
 
-// loadQualifiers runs query (which selects statement ID, property, datatype and
+// loadQualifiers runs query (which selects statement ID, property, value type, datatype and
 // value of the qualifiers of $1 = id's claims) and returns the rows in order.
 func loadQualifiers(db *sql.DB, query, id string) ([]Qualifier, error) {
 	rows, err := db.Query(query, id)
@@ -15,7 +15,7 @@ func loadQualifiers(db *sql.DB, query, id string) ([]Qualifier, error) {
 	var out []Qualifier
 	for rows.Next() {
 		var q Qualifier
-		if err := rows.Scan(&q.StatementID, &q.Property, &q.Type, &q.Value); err != nil {
+		if err := rows.Scan(&q.StatementID, &q.Property, &q.Type, &q.Datatype, &q.Value); err != nil {
 			return nil, err
 		}
 		out = append(out, q)

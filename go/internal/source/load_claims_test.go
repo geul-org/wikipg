@@ -8,7 +8,7 @@ func TestLoadClaims(t *testing.T) {
 	db, s := fixtureDB(t)
 	q := queriesFor(s).Claims
 	cs, err := loadClaims(db, q, "Q42")
-	if err != nil || len(cs) != 6 || cs[0].ID != 4201 || cs[0].Value != "Q5" || cs[0].Type != "wikibase-entityid" || cs[0].Rank != "preferred" ||
+	if err != nil || len(cs) != 8 || cs[6].Datatype != "url" || cs[7].Datatype != "commonsMedia" || cs[0].ID != 4201 || cs[0].Value != "Q5" || cs[0].Type != "wikibase-entityid" || cs[0].Rank != "preferred" ||
 		cs[3].Value != "113230702" || cs[4].Value != "" || cs[4].Type != "" || cs[1].Value[0] != '{' {
 		t.Fatalf("got %+v %v", cs, err)
 	}
