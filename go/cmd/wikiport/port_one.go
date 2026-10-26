@@ -21,7 +21,7 @@ func portOne(db *sql.DB, dir resolve.Dir, id string, issuer []core.Word, c confi
 	if err != nil || !ok {
 		return port.Report{ID: id}, false, err
 	}
-	b, rep, err := port.BuildDoc(e, issuer, provenanceOf(c.Commit))
+	b, rep, err := port.BuildDoc(e, issuer, provenanceOf(c.Commit, c.LibCommit))
 	if err != nil {
 		return rep, false, err
 	}

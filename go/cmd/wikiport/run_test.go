@@ -12,7 +12,7 @@ func TestRun(t *testing.T) {
 	openDB(t)
 	root := t.TempDir()
 	report := filepath.Join(root, "r.tsv")
-	if err := run([]string{"-root", root, "-from", "1", "-to", "3", "-langs", "en", "-commit", "test", "-report", report}); err != nil {
+	if err := run([]string{"-root", root, "-from", "1", "-to", "3", "-langs", "en", "-commit", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "-lib-commit", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "-report", report}); err != nil {
 		t.Fatal(err)
 	}
 	for _, p := range []string{".well-known/geul/0x00010000/documents.geul", ".well-known/geul/0x00010001/documents.geul", "r.tsv"} {
@@ -20,7 +20,7 @@ func TestRun(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	if err := run([]string{"-root", root, "-from", "1", "-to", "1", "-langs", "en", "-commit", "test"}); err != nil {
+	if err := run([]string{"-root", root, "-from", "1", "-to", "1", "-langs", "en", "-commit", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "-lib-commit", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}); err != nil {
 		t.Fatalf("no report: %v", err)
 	}
 	if err := run(nil); err == nil {
@@ -28,7 +28,7 @@ func TestRun(t *testing.T) {
 	}
 	blocked := filepath.Join(root, "blocked")
 	os.WriteFile(blocked, nil, 0o644)
-	if err := run([]string{"-root", blocked, "-from", "1", "-to", "1", "-commit", "test"}); err == nil {
+	if err := run([]string{"-root", blocked, "-from", "1", "-to", "1", "-commit", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "-lib-commit", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}); err == nil {
 		t.Fatal("unwritable: want error")
 	}
 	// An Issuer directory that is a file: the properties of Q1 cannot be
@@ -42,7 +42,7 @@ func TestRun(t *testing.T) {
 		r := t.TempDir()
 		os.MkdirAll(filepath.Join(r, ".well-known/geul"), 0o755)
 		os.WriteFile(filepath.Join(r, ".well-known/geul", c.file), nil, 0o644)
-		if err := run([]string{"-root", r, "-from", c.from, "-to", c.from, "-langs", "en", "-commit", "test"}); err == nil {
+		if err := run([]string{"-root", r, "-from", c.from, "-to", c.from, "-langs", "en", "-commit", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "-lib-commit", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}); err == nil {
 			t.Fatalf("%s file, Q%s: want error", c.file, c.from)
 		}
 	}

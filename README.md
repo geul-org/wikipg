@@ -87,15 +87,17 @@
 - 출처: Wikidata 덤프 20250908, 그 항목의 QID
 - 받은 시각: 보관 파일을 받은 시각
 - 원본 해시: 생략(위 빈칸 표). 생략했다는 사실을 기록한다
-- 적재 도구: geul-entity `postgres.go` 커밋 `4225b3b`
-- 변환 도구: 포팅 도구 저장소 + 커밋
+- 변환 도구: TRANSFORMED-BY 셋(docs/meta/lineage/TRANSFORMED-BY). 도구 Reference는 geul.org URL 정의 Reference 문서(GEUL-ORG), 버전은 전체 커밋 ID(SHA1-DIGEST)다.
+  - 적재 도구 geul-entity(`0x0001000000000003`) `4225b3b4297796a79e95c4cda5aa54df3acc4069`(`artifacts/wikidata/postgres.go`)
+  - 포팅 도구 wikiport(`0x0001000000000001`) `-commit`
+  - GEUL 라이브러리 geul-lib(`0x0001000000000002`) `-lib-commit`. wikiport는 `go.mod`의 `replace`로 로컬 라이브러리를 쓰므로 wikiport 커밋만으로는 라이브러리 코드가 정해지지 않는다
 
 ## 포팅 도구 (`wiki/go`)
 
 ```sh
 cd draft/t002/wiki/go
 # DB 접속은 lib/pq의 PG* 환경변수(PGHOST, PGUSER, PGPASSWORD, PGDATABASE, PGSSLMODE)로 한다.
-go run ./cmd/wikiport -root ../.. -from 1 -to 1000 -commit "$(git rev-parse HEAD)" -report report.tsv
+go run ./cmd/wikiport -root ../.. -from 1 -to 1000 -commit "$(git rev-parse HEAD)" -lib-commit "$(git -C ../../geul rev-parse HEAD)" -report report.tsv
 ```
 
 | 플래그 | 뜻 | 기본값 |
@@ -103,7 +105,8 @@ go run ./cmd/wikiport -root ../.. -from 1 -to 1000 -commit "$(git rev-parse HEAD
 | `-root` | `.well-known/geul`을 담은 t002 루트 | `.` |
 | `-from`, `-to` | QID 범위 | 1, 1000 |
 | `-langs` | 레이블·설명·별칭 언어 | `ko,en` |
-| `-commit` | TRANSFORMED-BY에 남길 포팅 도구 커밋 (필수) | |
+| `-commit` | TRANSFORMED-BY에 남길 포팅 도구 커밋, 전체 ID (필수) | |
+| `-lib-commit` | TRANSFORMED-BY에 남길 GEUL 라이브러리 커밋, 전체 ID (필수) | |
 | `-report` | 개체별 건수·건너뛴 사유·원문 보존 날짜의 사유 TSV (열: id, labels, descriptions, aliases, triples, qualifiers, skipped, raw. qualifier 사유는 `qualifier ` 접두) | 없음 |
 | `-dsn` | PostgreSQL DSN | 비우면 PG* 환경변수 |
 
@@ -163,4 +166,4 @@ go run ./cmd/wikiload -in /mnt/d/geul/wikidata/wikidata-20261019-all.json.bz2 -c
 - 표에 없고 BCP 47 형식도 아닌 코드(빈 언어 등)는 레이블·설명·별칭이면 건너뛰고(보고서 `skipped`), monolingualtext면 원문 UTF8-TEXT로 보존한다(보고서 `raw`).
 - 클레임은 TRIPLE(Edge Id, Predicate, Subject, Object, Rank)이고, 그 qualifier는 바로 뒤에 QUALIFIER(Edge Id, Property, 대상 TRIPLE의 Edge Id, Value)로 잇는다. qualifier 값은 본 값과 같은 규칙으로 바꾼다(날짜 원문 보존 포함). 출처는 담지 않는다(DB에 없다).
 - qualifier 순서는 `triple_qualifiers`의 물리 행 순서(ctid)다. 같은 속성 안의 순서는 원본과 같지만 속성 사이 순서는 원본이 아니다(위 빈칸).
-- TRANSFORMED-BY는 임시로 URI Value + 버전 텍스트다. 용어 정의 문서(문서 ID 0 색인)가 생기면 EXTERNAL-ISSUER로 바꾼다.
+- TRANSFORMED-BY는 도구 Reference(EXTERNAL-ISSUER-1WORD, geul.org URL 정의 Reference 문서의 LOCAL 2) + 커밋 SHA1-DIGEST다(2026-10-26). 커밋은 커밋된 소스여야 한다: 작업 트리에 커밋되지 않은 변경이 있으면 그 커밋 ID를 쓰지 말고 먼저 커밋한다(도구는 아직 검사하지 않는다).

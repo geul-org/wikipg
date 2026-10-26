@@ -14,7 +14,7 @@ import (
 
 func TestPortIDs(t *testing.T) {
 	db := openDB(t)
-	c := config{Langs: []string{"en"}, Commit: "test"}
+	c := config{Langs: []string{"en"}, Commit: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", LibCommit: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}
 	reps, written, err := portIDs(db, resolve.Dir{Root: t.TempDir()}, "Q", []uint64{1, 6}, []core.Word{1, 0}, c)
 	if err != nil || len(reps) != 2 || !slices.Equal(written, []uint64{1}) {
 		t.Fatalf("got %d %v %v", len(reps), written, err)

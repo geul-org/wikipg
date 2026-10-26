@@ -14,7 +14,7 @@ import (
 func TestPortOne(t *testing.T) {
 	db := openDB(t)
 	root := t.TempDir()
-	c := config{Langs: []string{"ko", "en"}, Commit: "test"}
+	c := config{Langs: []string{"ko", "en"}, Commit: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", LibCommit: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}
 	rep, ok, err := portOne(db, resolve.Dir{Root: root}, "Q42", []core.Word{1, 0}, c)
 	if err != nil || !ok || rep.Triples == 0 || rep.Qualifiers == 0 {
 		t.Fatalf("Q42: %+v %v %v", rep, ok, err)
