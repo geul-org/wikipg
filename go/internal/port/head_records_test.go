@@ -1,5 +1,5 @@
 //ff:func feature=port type=encoder control=iteration dimension=1
-//ff:what TestHeadRecords — SPEC-VERSION, DOC-ID, two SOURCE, ACQUIRED-AT and one TRANSFORMED-BY per tool in order; a bad Issuer or commit fails
+//ff:what TestHeadRecords — SPEC-VERSION, DOC-ID, two SOURCE (digest left out), ACQUIRED-AT and one TRANSFORMED-BY per tool in order; a bad Issuer or commit fails
 package port
 
 import (
@@ -27,7 +27,7 @@ func TestHeadRecords(t *testing.T) {
 		t.Fatalf("DOC-ID: %v %v %v", issuer, doc, err)
 	}
 	porter := append([]core.Word{0x0360, 0, 1, 0, 0, 1, 2, 0x0D62}, slices.Repeat([]core.Word{0x2222}, 10)...)
-	if !slices.Equal(rs[3].Payload, []core.Word{0x00A0, 42}) || !slices.Equal(rs[6].Payload, porter) {
+	if !slices.Equal(rs[3].Payload, []core.Word{0x00A0, 42, core.Absent}) || rs[2].Payload[len(rs[2].Payload)-1] != core.Absent || !slices.Equal(rs[6].Payload, porter) {
 		t.Fatalf("subject %04X porter %04X", rs[3].Payload, rs[6].Payload)
 	}
 	if _, err := headRecords([]core.Word{0, 1}, 42, subj, prov()); err == nil {

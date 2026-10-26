@@ -86,7 +86,7 @@
 
 - 출처: Wikidata 덤프 20250908, 그 항목의 QID
 - 받은 시각: 보관 파일을 받은 시각
-- 원본 해시: 생략(위 빈칸 표). 생략했다는 사실을 기록한다
+- 원본 해시: 생략(위 빈칸 표). 생략했다는 사실을 기록한다: SOURCE 둘(덤프 URI, 항목 QID)의 다이제스트 자리에 없음 표지 `0x0000`을 쓴다(docs/edge/CODEC 선택 필드)
 - 변환 도구: TRANSFORMED-BY 셋(docs/meta/lineage/TRANSFORMED-BY). 도구 Reference는 geul.org URL 정의 Reference 문서(GEUL-ORG), 버전은 전체 커밋 ID(SHA1-DIGEST)다.
   - 적재 도구 geul-entity(`0x0001000000000003`) `4225b3b4297796a79e95c4cda5aa54df3acc4069`(`artifacts/wikidata/postgres.go`)
   - 포팅 도구 wikiport(`0x0001000000000001`) `-commit`
