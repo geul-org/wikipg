@@ -1,5 +1,5 @@
 //ff:func feature=port type=encoder control=iteration dimension=1
-//ff:what TestObjectRecord — entity IDs, strings, dates and monolingual texts convert; an unconvertible date has its time reason; empty, lexeme, invalid UTF-8 and unsupported values are skipped
+//ff:what TestObjectRecord — entity IDs, strings, dates, monolingual texts and coordinates convert; an unconvertible date has its time reason; empty, lexeme, invalid UTF-8 and unsupported values are skipped
 package port
 
 import (
@@ -31,6 +31,9 @@ func TestObjectRecord(t *testing.T) {
 	}
 	if ws := enc(source.Claim{Type: "monolingualtext", Value: `{"text":"Paris","language":"fr"}`}); !slices.Equal(ws, []core.Word{0x0ACB, 0x08C6, 0x6672, 0x5061, 0x7269, 0x7300}) {
 		t.Fatalf("monolingual: %04X", ws)
+	}
+	if ws := enc(source.Claim{Type: "globecoordinate", Value: `{"latitude":1,"longitude":2,"precision":null,"globe":"http://www.wikidata.org/entity/Q2"}`}); ws[0] != 0x0D04 {
+		t.Fatalf("coordinate: %04X", ws)
 	}
 	for want, c := range map[string]source.Claim{
 		"값 없음(novalue·somevalue)":    {Type: "wikibase-item"},

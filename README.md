@@ -110,10 +110,29 @@ go run ./cmd/wikiport -root ../.. -from 1 -to 1000 -commit "$(git rev-parse HEAD
 | time, 율리우스력 일·월·연 정밀도 | GEDCOM-DATE (`JULIAN 14 OCT 1066`) |
 | time, 그 밖(세기 이상 정밀도, 시간대·오차 범위 등) | datavalue JSON 원문을 UTF8-TEXT로. 날짜는 건너뛰지 않는다 |
 | novalue, somevalue | 건너뜀 (DB에 값이 비어 있다) |
-| monolingualtext | UTF8-LANGUAGE-TEXT (언어는 LANGUAGE-BCP47-CODE). 언어 코드가 BCP 47 형식이 아니면 건너뜀 |
-| quantity, globecoordinate 등 | 건너뜀 (이번 범위 밖) |
+| monolingualtext | UTF8-LANGUAGE-TEXT (언어는 LANGUAGE-BCP47-CODE, 아래 언어 코드 대응). 그래도 BCP 47 형식이 아니면(빈 언어) datavalue 원문을 UTF8-TEXT로 |
+| globecoordinate | 지구(Q2)는 COORDINATE-EARTH, 다른 천체는 COORDINATE-GEO(천체 = WIKIDATA-QID). 지구 좌표의 불확도는 precision에서 Georeferencing Best Practices 3.4.3 방법으로(정밀도 기인 불확도의 하한), 다른 천체와 precision 없음은 미상. 천체 없음·범위 밖·이상한 precision은 datavalue 원문을 UTF8-TEXT로 |
+| quantity 등 | 건너뜀 (이번 범위 밖) |
 
-- 레이블·별칭은 LABEL·ALIAS(Edge Id, Subject, Object)이고 Object는 UTF8-LANGUAGE-TEXT, 언어는 LANGUAGE-BCP47-CODE(GEUL 언어 레지스트리 전). 언어 코드는 BCP 47 형식만 확인한다(위키미디어 고유 코드 `simple` 등도 형식은 통과한다).
+- 레이블·별칭은 LABEL·ALIAS(Edge Id, Subject, Object)이고 Object는 UTF8-LANGUAGE-TEXT, 언어는 LANGUAGE-BCP47-CODE(GEUL 언어 레지스트리 전). 언어 코드는 BCP 47 형식만 확인한다.
+
+### 언어 코드 대응
+
+위키미디어 언어 코드 중 BCP 47이 아닌 14개는 BCP 47 tag로 옮긴다(2026-10-26 기존 DB 전수조사에서 레이블·별칭·설명·monolingualtext의 무효 코드 전부, 대소문자 무시). 근거는 IANA Language Subtag Registry 항목이고 MediaWiki `LanguageCode.php`와는 대조만 했다.
+
+| 위키미디어 | BCP 47 | | 위키미디어 | BCP 47 |
+|---|---|---|---|---|
+| `sr-el` | `sr-Latn` | | `map-bms` | `jv-x-bms` |
+| `bat-smg` | `sgs` | | `roa-tara` | `nap-x-tara` |
+| `fiu-vro` | `vro` | | `de-formal` | `de-x-formal` |
+| `cbk-zam` | `cbk` | | `es-formal` | `es-x-formal` |
+| `simple` | `en-simple` | | `hu-formal` | `hu-x-formal` |
+| `eml` | `egl` | | `nl-informal` | `nl-x-informal` |
+| `roa-rup` | `rup` | | | |
+| `zh-classical` | `lzh` | | | |
+
+- 사설 확장(`x-`)의 뜻: `x-formal` 존댓말(격식체), `x-informal` 반말(비격식체), `x-bms` 자바어 반유마스 방언, `x-tara` 나폴리어 타란토 방언.
+- 표에 없고 BCP 47 형식도 아닌 코드(빈 언어 등)는 레이블·별칭이면 건너뛰고(보고서 `skipped`), monolingualtext면 원문 UTF8-TEXT로 보존한다(보고서 `raw`).
 - 클레임은 TRIPLE(Edge Id, Predicate, Subject, Object, Rank)이고, 그 qualifier는 바로 뒤에 QUALIFIER(Edge Id, Property, 대상 TRIPLE의 Edge Id, Value)로 잇는다. qualifier 값은 본 값과 같은 규칙으로 바꾼다(날짜 원문 보존 포함). 출처는 담지 않는다(DB에 없다).
 - qualifier 순서는 `triple_qualifiers`의 물리 행 순서(ctid)다. 같은 속성 안의 순서는 원본과 같지만 속성 사이 순서는 원본이 아니다(위 빈칸).
 - TRANSFORMED-BY는 임시로 URI Value + 버전 텍스트다. 용어 정의 문서(문서 ID 0 색인)가 생기면 EXTERNAL-ISSUER로 바꾼다.

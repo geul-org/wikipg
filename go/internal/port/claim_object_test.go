@@ -1,5 +1,5 @@
 //ff:func feature=port type=encoder control=sequence
-//ff:what TestClaimObject — converted values pass through, an unconvertible date becomes its original text with the reason, invalid UTF-8 and other skips stay skipped
+//ff:what TestClaimObject — converted values pass through, an unconvertible date, coordinate or monolingual text becomes its original text with the reason, invalid UTF-8 and other skips stay skipped
 package port
 
 import (
@@ -22,6 +22,12 @@ func TestClaimObject(t *testing.T) {
 	}
 	if _, skip, raw := claimObject(source.Claim{Type: "time", Value: "\xff"}); skip != "time: UTF-8 아님" || raw != "" {
 		t.Fatalf("UTF-8: %q %q", skip, raw)
+	}
+	if _, skip, raw := claimObject(source.Claim{Type: "globecoordinate", Value: `{"latitude":1,"longitude":2,"globe":""}`}); skip != "" || raw != "globecoordinate: 천체 없음" {
+		t.Fatalf("raw coordinate: %q %q", skip, raw)
+	}
+	if _, skip, raw := claimObject(source.Claim{Type: "monolingualtext", Value: `{"text":"x","language":""}`}); skip != "" || raw != "monolingualtext: 언어 코드 " {
+		t.Fatalf("raw monolingual: %q %q", skip, raw)
 	}
 	if _, skip, raw := claimObject(source.Claim{Type: "quantity", Value: "{}"}); skip != "형식 미지원: quantity" || raw != "" {
 		t.Fatalf("quantity: %q %q", skip, raw)
