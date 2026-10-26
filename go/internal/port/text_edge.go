@@ -12,10 +12,11 @@ import (
 // ALIAS (edge/ALIAS) Edge numbered id
 // for t on subject: the Object is t as UTF8-LANGUAGE-TEXT (languageText). It
 // is false when t's language code is not a BCP 47 tag in form.
-func textEdge(codec uint8, id uint64, subject core.Record, t source.Text) (core.Record, bool) {
+func textEdge(codec uint8, a IDs, subject core.Record, t source.Text) (core.Record, bool) {
 	text, ok := languageText(t.Lang, t.Value)
 	if !ok {
 		return core.Record{}, false
 	}
-	return compose(core.KindEdge, codec, core.EncodeLocalRef(id), subject, text), true
+	r, _ := edgeWith(a, codec, []core.Record{subject, text})
+	return r, true
 }

@@ -7,8 +7,6 @@ import "github.com/geul-org/geul/go/pkg/core"
 // tripleEdge builds a TRIPLE Edge (edge/TRIPLE): the LOCAL Edge Id, the
 // predicate (WIKIDATA-PID), the subject, the object record and the rank as
 // one raw word (rankWord).
-func tripleEdge(id uint64, predicate, subject, object core.Record, rank core.Word) core.Record {
-	r := compose(core.KindEdge, edgeTriple, core.EncodeLocalRef(id), predicate, subject, object)
-	r.Payload = append(r.Payload, rank)
-	return r
+func tripleEdge(a IDs, predicate, subject, object core.Record, rank core.Word) (core.Record, uint64) {
+	return edgeWith(a, edgeTriple, []core.Record{predicate, subject, object}, rank)
 }

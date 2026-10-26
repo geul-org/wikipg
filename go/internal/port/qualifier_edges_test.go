@@ -11,8 +11,8 @@ import (
 
 func TestQualifierEdges(t *testing.T) {
 	rep := Report{Skipped: map[string]int{}, Raw: map[string]int{}}
-	next := uint64(10)
-	rs := qualifierEdges(&next, 9, []source.Qualifier{
+	ids := freshIDs(10)
+	rs := qualifierEdges(ids, 9, []source.Qualifier{
 		{Property: "P580", Type: "time", Value: `{"time":"+1971-00-00T00:00:00Z","timezone":0,"before":0,"after":0,"precision":9,"calendarmodel":"` + gregorian + `"}`},
 		{Property: "P512", Type: "wikibase-entityid", Value: "Q1765120"},
 		{Property: "X1", Type: "string", Value: "a"},
@@ -20,8 +20,8 @@ func TestQualifierEdges(t *testing.T) {
 		{Property: "P585", Type: "time", Value: "x"},
 		{Property: "P642", Type: "wikibase-entityid", Value: "P31"},
 	}, &rep)
-	if len(rs) != 4 || next != 14 || rep.Qualifiers != 4 || rs[0].Payload[1] != 10 || rs[3].Payload[1] != 13 {
-		t.Fatalf("got %d next %d %+v", len(rs), next, rep)
+	if len(rs) != 4 || ids.Next() != 14 || rep.Qualifiers != 4 || rs[0].Payload[1] != 10 || rs[3].Payload[1] != 13 {
+		t.Fatalf("got %d next %d %+v", len(rs), ids.Next(), rep)
 	}
 	if rep.Skipped["qualifier 속성 ID: X1"] != 1 || rep.Skipped["qualifier 형식 미지원: unknown"] != 1 || rep.Raw["qualifier time: JSON 아님"] != 1 {
 		t.Fatalf("counts %v %v", rep.Skipped, rep.Raw)

@@ -14,7 +14,7 @@ const wikibaseOntology = "http://wikiba.se/ontology#"
 // normal) gives the type (wikibaseType). No datatype (an item) gives nothing;
 // an unknown one is counted in rep.Skipped and gives nothing. Edge Ids and
 // the LOCAL come from *next.
-func datatypeEdges(next *uint64, subject core.Record, datatype string, rep *Report) []core.Record {
+func datatypeEdges(a IDs, subject core.Record, datatype string, rep *Report) []core.Record {
 	uri := func(s string) core.Record { return core.EncodeBytesValue(codecURIEven, []byte(s)) }
 	name, ok := wikibaseType(datatype)
 	switch {
@@ -24,10 +24,8 @@ func datatypeEdges(next *uint64, subject core.Record, datatype string, rep *Repo
 		rep.Skipped["데이터 타입: "+datatype]++
 		return nil
 	}
-	bind, pred, triple := *next, *next+1, *next+2
-	*next += 3
-	return []core.Record{
-		compose(core.KindEdge, edgeReferenceNode, core.EncodeLocalRef(bind), core.EncodeLocalRef(pred), uri(wikibaseOntology+"propertyType")),
-		tripleEdge(triple, core.EncodeLocalRef(pred), subject, uri(wikibaseOntology+name), 0),
-	}
+	property := uri(wikibaseOntology + "propertyType")
+	bind, pred := a.Define(property)
+	triple, _ := tripleEdge(a, core.EncodeLocalRef(pred), subject, uri(wikibaseOntology+name), 0)
+	return []core.Record{compose(core.KindEdge, edgeReferenceNode, core.EncodeLocalRef(bind), core.EncodeLocalRef(pred), property), triple}
 }

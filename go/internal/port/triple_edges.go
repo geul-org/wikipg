@@ -14,7 +14,7 @@ import (
 // counted in rep.Skipped by reason, a date kept as original text in rep.Raw
 // by its conversion reason (claimObject), and every property used as a predicate or
 // a value is added to rep.Properties.
-func tripleEdges(next *uint64, subject core.Record, claims []source.Claim, rep *Report) []core.Record {
+func tripleEdges(a IDs, subject core.Record, claims []source.Claim, rep *Report) []core.Record {
 	var out []core.Record
 	for _, c := range claims {
 		pred, okPred := entityRef(c.Property)
@@ -34,11 +34,10 @@ func tripleEdges(next *uint64, subject core.Record, claims []source.Claim, rep *
 			rep.Raw[raw]++
 		}
 		rep.Properties = append(rep.Properties, propertiesOf(c)...)
-		id := *next
-		out = append(out, tripleEdge(id, pred, subject, obj, rank))
-		*next++
+		r, id := tripleEdge(a, pred, subject, obj, rank)
+		out = append(out, r)
 		rep.Triples++
-		out = append(out, qualifierEdges(next, id, c.Qualifiers, rep)...)
+		out = append(out, qualifierEdges(a, id, c.Qualifiers, rep)...)
 	}
 	return out
 }

@@ -186,6 +186,7 @@ go run ./cmd/wikiload -in /mnt/d/geul/wikidata/wikidata-20261019-all.json.bz2 -c
   TRIPLE( #n, P214, URI http://wikiba.se/ontology#ExternalId, normal )
   ```
   어휘는 위키데이터 RDF의 Wikibase 온톨로지 이름 그대로다(18종, files/geul/wikidata-datatype-mapping.md). 모르는 데이터 타입은 쓰지 않고 보고서 `skipped`에 남긴다. 문서당 약 50 WORD.
+- Edge Id(LOCAL ID)는 버전을 넘어 유지한다(docs OVERVIEW 개정). 다시 생성할 때 직전 공표본과 그 버전 목록의 `NEXT-LOCAL-ID`를 읽어(`resolve.Dir.Current`), 내용이 같은 서술은 같은 번호를, 바뀌거나 새로 생긴 서술은 다음 번호를 받는다(geul `delta.LocalIDs`). 사라진 번호는 다시 쓰지 않는다. 내용이 바뀐 클레임은 "삭제 + 신규"가 된다(개정 표지가 없다).
 - 클레임은 TRIPLE(Edge Id, Predicate, Subject, Object, Rank)이고, 그 qualifier는 바로 뒤에 QUALIFIER(Edge Id, Property, 대상 TRIPLE의 Edge Id, Value)로 잇는다. qualifier 값은 본 값과 같은 규칙으로 바꾼다(날짜 원문 보존 포함). 출처는 담지 않는다(DB에 없다).
 - qualifier 순서는 `triple_qualifiers`의 물리 행 순서(ctid)다. 같은 속성 안의 순서는 원본과 같지만 속성 사이 순서는 원본이 아니다(위 빈칸).
 - TRANSFORMED-BY는 도구 Reference(EXTERNAL-ISSUER-1WORD, geul.org 용어 정의 문서의 LOCAL 2) + 커밋 SHA1-DIGEST다(2026-10-26). 커밋은 커밋된 소스여야 한다: 작업 트리에 커밋되지 않은 변경이 있으면 그 커밋 ID를 쓰지 말고 먼저 커밋한다(도구는 아직 검사하지 않는다).

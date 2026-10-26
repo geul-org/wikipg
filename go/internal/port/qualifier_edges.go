@@ -13,7 +13,7 @@ import (
 // numbering Edge Ids from *next and keeping qs order. Skipped qualifiers are
 // counted in rep.Skipped and dates kept as original text in rep.Raw, both
 // prefixed "qualifier "; the properties used are added to rep.Properties.
-func qualifierEdges(next *uint64, target uint64, qs []source.Qualifier, rep *Report) []core.Record {
+func qualifierEdges(a IDs, target uint64, qs []source.Qualifier, rep *Report) []core.Record {
 	var out []core.Record
 	for _, q := range qs {
 		c := qualifierClaim(q)
@@ -30,8 +30,7 @@ func qualifierEdges(next *uint64, target uint64, qs []source.Qualifier, rep *Rep
 			rep.Raw["qualifier "+raw]++
 		}
 		rep.Properties = append(rep.Properties, propertiesOf(c)...)
-		out = append(out, qualifierEdge(*next, prop, target, value))
-		*next++
+		out = append(out, qualifierEdge(a, prop, target, value))
 		rep.Qualifiers++
 	}
 	return out
