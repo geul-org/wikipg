@@ -5,21 +5,19 @@ package load
 import (
 	"github.com/lib/pq"
 
-	"github.com/geul-org/wikiport/internal/dump"
+	"github.com/geul-org/wikipg/internal/dump"
 )
 
-// addSitelinks adds a sitelink row for each site of e: site, page title and
-// badges (an empty array when there are none).
+// addSitelinks adds a sitelink row for each site of e: site, page title
+// (without NUL bytes), badges (an empty array when there are none) and
+// title_json, the exact title when it had NUL bytes (nulJSON).
 func (r *Rows) addSitelinks(c Config, line int64, e dump.Entity) {
 	for site, s := range e.Sitelinks {
 		badges := s.Badges
 		if badges == nil {
 			badges = []string{}
 		}
-		title, ok := cleanText(s.Title)
-		if !ok {
-			r.Error(c.DumpID, line, e.ID, "sitelink", "NUL byte removed from sitelink title", nil)
-		}
-		r.add("sitelink", e.ID, c.DumpID, site, title, pq.Array(badges))
+		title, _ := cleanText(s.Title)
+		r.add("sitelink", e.ID, c.DumpID, site, title, pq.Array(badges), nulJSON(s.Title))
 	}
 }

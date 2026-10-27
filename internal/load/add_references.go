@@ -2,7 +2,7 @@
 //ff:what Rows.addReferences — a statement's reference links in order, and each source's snaks the first time its hash is seen
 package load
 
-import "github.com/geul-org/wikiport/internal/dump"
+import "github.com/geul-org/wikipg/internal/dump"
 
 // addReferences links statement sid to each of its references in order
 // (statement_reference). A source whose hash refs has not seen gets its
@@ -16,7 +16,7 @@ func (r *Rows) addReferences(c Config, line int64, id string, sid int64, rs []du
 		}
 		r.add("reference", ref.Hash, c.DumpID)
 		for _, sn := range orderedSnaks(ref.SnaksOrder, ref.Snaks) {
-			vals := r.snakValues(c, line, id, sn.Snak)
+			vals := snakValues(sn.Snak)
 			r.add("reference_snak", append([]any{ref.Hash, c.DumpID, sn.Ordinal, sn.Snak.Property, sn.ValueOrdinal}, vals...)...)
 		}
 	}

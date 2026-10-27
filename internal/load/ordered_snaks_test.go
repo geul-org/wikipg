@@ -5,7 +5,7 @@ package load
 import (
 	"testing"
 
-	"github.com/geul-org/wikiport/internal/dump"
+	"github.com/geul-org/wikipg/internal/dump"
 )
 
 func TestOrderedSnaks(t *testing.T) {

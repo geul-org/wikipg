@@ -1,7 +1,5 @@
 .tsma/
 tsma-results.jsonl
 session.json
-/wikiport
-/wikiload
-cmd/wikiport/wikiport
-cmd/wikiload/wikiload
+/wikipg
+cmd/wikipg/wikipg

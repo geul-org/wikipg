@@ -1,8 +1,2 @@
-github.com/cacack/gedcom-go/v3 v3.2.0 h1:maqzijLQW/MxujHqfqdEziNQgJZpd6tcxkujPLFD+dY=
-github.com/cacack/gedcom-go/v3 v3.2.0/go.mod h1:5ekehkreOOKz+SZ/gjcZ3vApMihE6ycHuYMkYNkVYE8=
 github.com/lib/pq v1.10.9 h1:YXG7RB+JIjhP29X+OtkiDnYaXQwpS4JEWq7dtCCRUEw=
 github.com/lib/pq v1.10.9/go.mod h1:AlVN5x4E4T544tWzH6hKfbfQvm3HdbOxrmggDNAPY9o=
-github.com/sfomuseum/go-edtf v1.3.0 h1:07oBf8NcWmpwIzUz/WMgTz1huQNVdiJ/IjFzkIRGj2Q=
-github.com/sfomuseum/go-edtf v1.3.0/go.mod h1:4RLvbBp7XhqRuDVhJjYUKY5napMKQvcZxQnIb/i1tyo=
-golang.org/x/text v0.39.0 h1:UbZz4pLOvn600D6Oh6GGEI6VAmndrEBLv8/6BEXzyus=
-golang.org/x/text v0.39.0/go.mod h1:3UwRclnC2g0TU9x8PZiyfOajCd1zaUNHF9cvqcQZ+ZM=

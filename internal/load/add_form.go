@@ -5,7 +5,7 @@ package load
 import (
 	"github.com/lib/pq"
 
-	"github.com/geul-org/wikiport/internal/dump"
+	"github.com/geul-org/wikipg/internal/dump"
 )
 
 // addForm adds form f, the ord-th form of lexeme (number num): an entity row
@@ -22,7 +22,7 @@ func (r *Rows) addForm(c Config, line int64, lexeme string, num int64, ord int, 
 	r.add("entity", f.ID, line, "L", num, "form", nil, nil, nil, c.DumpID)
 	r.add("form", f.ID, lexeme, c.DumpID, ord, pq.Array(features))
 	for lang, t := range f.Representations {
-		r.addText(c, line, f.ID, "form_representation", t.Value, f.ID, c.DumpID, lang)
+		r.addText("form_representation", t.Value, f.ID, c.DumpID, lang)
 	}
 	return r.addStatements(c, line, f.ID, f.Claims, next, refs)
 }

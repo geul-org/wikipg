@@ -2,7 +2,7 @@
 //ff:what Rows.addLexeme — a lexeme's own rows: lexeme (language, category), lemmas, then each form and sense with their statements continuing the key sequence
 package load
 
-import "github.com/geul-org/wikiport/internal/dump"
+import "github.com/geul-org/wikipg/internal/dump"
 
 // addLexeme adds what only a lexeme (lexeme dump) has: the lexeme row with
 // its language and lexical category (item IDs), its lemmas (every language
@@ -16,7 +16,7 @@ func (r *Rows) addLexeme(c Config, line int64, e dump.Entity, num int64, next in
 	}
 	r.add("lexeme", e.ID, c.DumpID, nullable(e.Language), nullable(e.LexicalCategory))
 	for lang, t := range e.Lemmas {
-		r.addText(c, line, e.ID, "lemma", t.Value, e.ID, c.DumpID, lang)
+		r.addText("lemma", t.Value, e.ID, c.DumpID, lang)
 	}
 	ok := true
 	for ord, f := range e.Forms {

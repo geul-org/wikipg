@@ -2,7 +2,7 @@
 //ff:what Rows.addSense — one lexeme sense: its entity row (type sense), sense row, glosses in the kept languages and statements; the next key number
 package load
 
-import "github.com/geul-org/wikiport/internal/dump"
+import "github.com/geul-org/wikipg/internal/dump"
 
 // addSense adds sense s, the ord-th sense of lexeme (number num): an entity
 // row of type sense, the sense row, a gloss per language that c keeps
@@ -14,7 +14,7 @@ func (r *Rows) addSense(c Config, line int64, lexeme string, num int64, ord int,
 	r.add("sense", s.ID, lexeme, c.DumpID, ord)
 	for lang, t := range s.Glosses {
 		if c.keepLang(lang) {
-			r.addText(c, line, s.ID, "sense_gloss", t.Value, s.ID, c.DumpID, lang)
+			r.addText("sense_gloss", t.Value, s.ID, c.DumpID, lang)
 		}
 	}
 	return r.addStatements(c, line, s.ID, s.Claims, next, refs)

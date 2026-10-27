@@ -6,25 +6,25 @@ package load
 // order a batch writes them, with their columns (dump is written once by
 // InsertDump, not per batch).
 func tables() []table {
-	snak := []string{"snaktype", "datatype", "value_type", "value", "value_entity"}
+	snak := []string{"snaktype", "datatype", "value_type", "value", "value_entity", "value_json"}
 	return []table{
 		{"entity_raw", []string{"entity_id", "dump_id", "line_no", "raw"}},
 		{"entity", []string{"entity_id", "line_no", "kind", "num", "type", "datatype", "lastrevid", "modified", "dump_id"}},
-		{"label", []string{"entity_id", "dump_id", "language", "value"}},
-		{"description", []string{"entity_id", "dump_id", "language", "value"}},
-		{"alias", []string{"entity_id", "dump_id", "language", "ordinal", "value"}},
-		{"sitelink", []string{"entity_id", "dump_id", "site", "title", "badges"}},
+		{"label", []string{"entity_id", "dump_id", "language", "value", "value_json"}},
+		{"description", []string{"entity_id", "dump_id", "language", "value", "value_json"}},
+		{"alias", []string{"entity_id", "dump_id", "language", "ordinal", "value", "value_json"}},
+		{"sitelink", []string{"entity_id", "dump_id", "site", "title", "badges", "title_json"}},
 		{"statement", append([]string{"statement_id", "guid", "entity_id", "property", "ordinal", "rank"}, append(snak, "dump_id")...)},
 		{"qualifier", append([]string{"statement_id", "ordinal", "property", "value_ordinal"}, append(snak, "hash")...)},
 		{"reference", []string{"hash", "dump_id"}},
 		{"statement_reference", []string{"statement_id", "ordinal", "hash"}},
 		{"reference_snak", append([]string{"hash", "dump_id", "ordinal", "property", "value_ordinal"}, snak...)},
 		{"lexeme", []string{"entity_id", "dump_id", "language", "lexical_category"}},
-		{"lemma", []string{"entity_id", "dump_id", "language", "value"}},
+		{"lemma", []string{"entity_id", "dump_id", "language", "value", "value_json"}},
 		{"form", []string{"entity_id", "lexeme_id", "dump_id", "ordinal", "grammatical_features"}},
-		{"form_representation", []string{"entity_id", "dump_id", "language", "value"}},
+		{"form_representation", []string{"entity_id", "dump_id", "language", "value", "value_json"}},
 		{"sense", []string{"entity_id", "lexeme_id", "dump_id", "ordinal"}},
-		{"sense_gloss", []string{"entity_id", "dump_id", "language", "value"}},
+		{"sense_gloss", []string{"entity_id", "dump_id", "language", "value", "value_json"}},
 		{"load_error", []string{"dump_id", "line_no", "entity_id", "stage", "message", "excerpt"}},
 	}
 }

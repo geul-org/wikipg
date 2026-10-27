@@ -115,14 +115,16 @@ CREATE TABLE label (
     entity_id  text     NOT NULL,
     dump_id    smallint NOT NULL,
     language   text     NOT NULL,
-    value      text     NOT NULL
+    value      text     NOT NULL,                        -- NUL은 빼고 담는다
+    value_json text                                      -- NUL(\u0000)이 있던 값의 JSON 문자열 원문, 그 밖에는 NULL
 );
 
 CREATE TABLE description (
     entity_id  text     NOT NULL,
     dump_id    smallint NOT NULL,
     language   text     NOT NULL,
-    value      text     NOT NULL
+    value      text     NOT NULL,                        -- NUL은 빼고 담는다
+    value_json text                                      -- NUL(\u0000)이 있던 값의 JSON 문자열 원문, 그 밖에는 NULL
 );
 
 -- 별칭. ordinal은 덤프의 언어별 배열 순서(0부터).
@@ -131,15 +133,17 @@ CREATE TABLE alias (
     dump_id    smallint NOT NULL,
     language   text     NOT NULL,
     ordinal    smallint NOT NULL,
-    value      text     NOT NULL
+    value      text     NOT NULL,                        -- NUL은 빼고 담는다
+    value_json text                                      -- NUL(\u0000)이 있던 값의 JSON 문자열 원문, 그 밖에는 NULL
 );
 
 CREATE TABLE sitelink (
     entity_id  text     NOT NULL,
     dump_id    smallint NOT NULL,
     site       text   NOT NULL,                          -- enwiki, kowiki …
-    title      text   NOT NULL,
-    badges     text[] NOT NULL DEFAULT '{}'               -- 배지 항목 Q ID
+    title      text   NOT NULL,                          -- NUL은 빼고 담는다
+    badges     text[] NOT NULL DEFAULT '{}',              -- 배지 항목 Q ID
+    title_json text                                      -- NUL(\u0000)이 있던 제목의 JSON 문자열 원문, 그 밖에는 NULL
 );
 
 -- statement(위키데이터 claim). snak 값 열(snaktype … value_entity)은 qualifier·reference_snak과 같다.
@@ -147,6 +151,8 @@ CREATE TABLE sitelink (
 --                "precision":…,"calendarmodel":…}, 수량 {"amount":…,"unit":…,"upperBound":…},
 --                문자열은 JSON 문자열. novalue·somevalue는 NULL.
 --   value_entity 값이 개체일 때 그 ID(Q5). 역방향 질의용.
+--   value_json   jsonb가 담지 못하는 datavalue.value(문자열 안 \u0000)의 JSON 원문. 이때 value는 NULL.
+--                그 밖에는 NULL. 값을 버리지 않는다(무손실 적재).
 CREATE TABLE statement (
     statement_id  bigint         NOT NULL,               -- dump_id << 55 | 줄 번호 << 20 | 개체 안 순번 (결정적)
     guid          text           NOT NULL,               -- 위키데이터 statement ID (Q42$…)
@@ -159,6 +165,7 @@ CREATE TABLE statement (
     value_type    text,                                  -- datavalue.type (wikibase-entityid, time, quantity …)
     value         jsonb,
     value_entity  text,
+    value_json    text,                                  -- jsonb가 못 담는 값(\u0000)의 JSON 원문
     dump_id       smallint       NOT NULL
 );
 
@@ -174,6 +181,7 @@ CREATE TABLE qualifier (
     value_type     text,
     value          jsonb,
     value_entity   text,
+    value_json     text,                                 -- jsonb가 못 담는 값(\u0000)의 JSON 원문
     hash           text                                  -- snak hash
 );
 
@@ -191,7 +199,8 @@ CREATE TABLE lemma (
     entity_id  text     NOT NULL,
     dump_id    smallint NOT NULL,
     language   text     NOT NULL,
-    value      text     NOT NULL
+    value      text     NOT NULL,                        -- NUL은 빼고 담는다
+    value_json text                                      -- NUL(\u0000)이 있던 값의 JSON 문자열 원문, 그 밖에는 NULL
 );
 
 -- 어형. ordinal은 덤프의 forms 배열 순서(0부터). grammatical_features는 문법 자질 항목 Q ID.
@@ -208,7 +217,8 @@ CREATE TABLE form_representation (
     entity_id  text     NOT NULL,
     dump_id    smallint NOT NULL,
     language   text     NOT NULL,
-    value      text     NOT NULL
+    value      text     NOT NULL,                        -- NUL은 빼고 담는다
+    value_json text                                      -- NUL(\u0000)이 있던 값의 JSON 문자열 원문, 그 밖에는 NULL
 );
 
 -- 뜻. ordinal은 senses 배열 순서. 뜻이 가리키는 항목은 statement(P5137 이 뜻의 항목 등)에 있다.
@@ -224,7 +234,8 @@ CREATE TABLE sense_gloss (
     entity_id  text     NOT NULL,
     dump_id    smallint NOT NULL,
     language   text     NOT NULL,
-    value      text     NOT NULL
+    value      text     NOT NULL,                        -- NUL은 빼고 담는다
+    value_json text                                      -- NUL(\u0000)이 있던 값의 JSON 문자열 원문, 그 밖에는 NULL
 );
 
 -- 출처 묶음. 위키데이터는 같은 출처를 여러 statement가 hash로 공유한다.
@@ -251,12 +262,28 @@ CREATE TABLE reference_snak (
     datatype       text,
     value_type     text,
     value          jsonb,
-    value_entity   text
+    value_entity   text,
+    value_json     text                                  -- jsonb가 못 담는 값(\u0000)의 JSON 원문
 );
 
 COMMIT;
 
 -- 4. 적재를 마친 뒤 ----------------------------------------------------------
+--
+-- 4.0 무손실 열 (2026-10-27 이전 적재분). 그 뒤의 wikipg는 이 열을 채운다. 열 추가는 메타데이터만
+--     바꿔 빠르지만 표 잠금이 필요하니 색인 작업이 없을 때 한다. \u0000 값은 load_error(stage value)의
+--     줄을 entity_raw에서 읽어 채운다(wikipg를 다시 돌리지 않는다).
+--
+-- ALTER TABLE wikidata.statement           ADD COLUMN value_json text;
+-- ALTER TABLE wikidata.qualifier           ADD COLUMN value_json text;
+-- ALTER TABLE wikidata.reference_snak      ADD COLUMN value_json text;
+-- ALTER TABLE wikidata.label               ADD COLUMN value_json text;
+-- ALTER TABLE wikidata.description         ADD COLUMN value_json text;
+-- ALTER TABLE wikidata.alias               ADD COLUMN value_json text;
+-- ALTER TABLE wikidata.lemma               ADD COLUMN value_json text;
+-- ALTER TABLE wikidata.form_representation ADD COLUMN value_json text;
+-- ALTER TABLE wikidata.sense_gloss         ADD COLUMN value_json text;
+-- ALTER TABLE wikidata.sitelink            ADD COLUMN title_json text;
 --
 -- 4.1 중단 뒤 재개했다면: checkpoint_line 이후 줄의 행은 중단 전에 일부 커밋됐을 수 있다.
 --     적재 도구는 재개할 때 그 줄들의 행을 먼저 지운다(-from-line 없이 재개하면 자동).
