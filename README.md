@@ -64,4 +64,4 @@ go run ./cmd/wikipg -in /mnt/d/geul/wikidata/wikidata-20261019-all.json.bz2 -com
 
 ## 라이선스
 
-MIT([LICENSE](LICENSE)). 제3자 고지는 [NOTICE](NOTICE). 위키데이터 덤프는 CC0.
+우리 저작물은 CC0 1.0([LICENSE](LICENSE)). 제3자 구성요소는 각자의 라이선스를 따르며 고지는 [NOTICE](NOTICE). 위키데이터 덤프는 CC0.
