@@ -331,6 +331,8 @@ COMMIT;
 -- 로캘)의 btree는 LIKE 'abc%' 접두어 검색에 쓰이지 않는다. 같음 비교에도 쓰인다.
 -- jsonb value 안쪽(quantity 단위, 시간 정밀도 등) 질의는 색인을 두지 않았다. 필요해지면
 -- 표현식 색인(예: (value->>'unit') WHERE value_type = 'quantity')을 추가한다.
+-- sitelink_site_title은 UNIQUE가 아니다. 덤프는 몇 시간에 걸쳐 만들어져 그사이의 문서 이동·병합으로
+-- 같은 (site, title)이 두 개체에 남을 수 있다(20261019 판: 145쌍 290행, 예 commonswiki의 Q1381027·Q141775567).
 --
 -- BEGIN;
 -- SET search_path = wikidata;
@@ -378,7 +380,7 @@ COMMIT;
 -- CREATE INDEX qualifier_value_entity             ON qualifier (value_entity) WHERE value_entity IS NOT NULL;
 -- CREATE INDEX statement_reference_hash           ON statement_reference (hash);
 -- CREATE INDEX reference_snak_value_entity        ON reference_snak (value_entity) WHERE value_entity IS NOT NULL;
--- CREATE UNIQUE INDEX sitelink_site_title         ON sitelink (site, title, dump_id);
+-- CREATE INDEX sitelink_site_title                ON sitelink (site, title, dump_id);
 -- CREATE INDEX label_language_value               ON label (language, lower(value) text_pattern_ops);
 -- CREATE INDEX alias_language_value               ON alias (language, lower(value) text_pattern_ops);
 -- CREATE INDEX load_error_dump_line               ON load_error (dump_id, line_no);
