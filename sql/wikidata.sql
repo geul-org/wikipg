@@ -327,8 +327,22 @@ COMMIT;
 --   | Lexeme의 어형·뜻을 순서대로                          | form_lexeme, sense_lexeme              |
 --   | 표제어·어형 표기 검색 (낱말 → Lexeme·Form)            | lemma_language_value, form_representation_language_value |
 --
--- 레이블·별칭 검색 색인은 lower(value)에 text_pattern_ops를 쓴다. 기본 정렬 규칙(C가 아닌
--- 로캘)의 btree는 LIKE 'abc%' 접두어 검색에 쓰이지 않는다. 같음 비교에도 쓰인다.
+-- 레이블·별칭·표제어·어형 검색 색인은 값의 앞 250자 lower(left(value, 250))에 text_pattern_ops를 쓴다.
+-- 기본 정렬 규칙(C가 아닌 로캘)의 btree는 LIKE 'abc%' 접두어 검색에 쓰이지 않는다. 같음 비교에도 쓰인다.
+-- 앞 250자만 색인하는 이유: btree 행은 2704바이트를 넘을 수 없는데, 옛 데이터에는 길이 제한(Wikibase
+-- 레이블·설명·별칭 250자) 전에 들어간 긴 값이 남아 있다(20261019 판: alias Q24793166 ps 4751자 8444바이트,
+-- 전체 lower(value) 색인이 "index row size 3296 exceeds btree version 4 maximum 2704"로 실패).
+-- 250자 = 현행 Wikibase 한도라 정상 값은 전부 색인되고, 최악 250자 × 4바이트 = 1000바이트 + language라
+-- 한도 안이다. 표본(TABLESAMPLE)으로 본 분포: label 중앙값 16자·99% 147자·최대 250자, alias 중앙값 7자·99% 42자.
+-- 색인을 타려면 질의에 같은 식을 쓰고, 250자 너머까지 맞도록 원래 식으로 다시 거른다. $1은 이스케이프 전
+-- 검색어, $2는 언어, esc(x)는 LIKE 특수문자 이스케이프 replace(replace(replace(x, '\', '\\'), '%', '\%'), '_', '\_')
+-- (자른 뒤에 이스케이프해야 250자 경계에서 이스케이프가 갈리지 않는다):
+--   접두어: WHERE language = $2 AND lower(left(value, 250)) LIKE esc(lower(left($1, 250))) || '%'
+--                              AND lower(value) LIKE esc(lower($1)) || '%'
+--   일치:   WHERE language = $2 AND lower(left(value, 250)) = lower(left($1, 250))
+--                              AND lower(value) = lower($1)
+-- 접두어 범위는 패턴이 계획 시점에 상수여야 생긴다. 준비된 문장의 일반 계획(generic plan)에서는
+-- 색인 범위가 빠지므로 필요하면 SET plan_cache_mode = force_custom_plan을 쓴다.
 -- jsonb value 안쪽(quantity 단위, 시간 정밀도 등) 질의는 색인을 두지 않았다. 필요해지면
 -- 표현식 색인(예: (value->>'unit') WHERE value_type = 'quantity')을 추가한다.
 -- sitelink_site_title은 UNIQUE가 아니다. 덤프는 몇 시간에 걸쳐 만들어져 그사이의 문서 이동·병합으로
@@ -381,13 +395,13 @@ COMMIT;
 -- CREATE INDEX statement_reference_hash           ON statement_reference (hash);
 -- CREATE INDEX reference_snak_value_entity        ON reference_snak (value_entity) WHERE value_entity IS NOT NULL;
 -- CREATE INDEX sitelink_site_title                ON sitelink (site, title, dump_id);
--- CREATE INDEX label_language_value               ON label (language, lower(value) text_pattern_ops);
--- CREATE INDEX alias_language_value               ON alias (language, lower(value) text_pattern_ops);
+-- CREATE INDEX label_language_value               ON label (language, lower(left(value, 250)) text_pattern_ops);
+-- CREATE INDEX alias_language_value               ON alias (language, lower(left(value, 250)) text_pattern_ops);
 -- CREATE INDEX load_error_dump_line               ON load_error (dump_id, line_no);
 -- CREATE INDEX form_lexeme                        ON form (lexeme_id, dump_id, ordinal);
 -- CREATE INDEX sense_lexeme                       ON sense (lexeme_id, dump_id, ordinal);
--- CREATE INDEX lemma_language_value               ON lemma (language, lower(value) text_pattern_ops);
--- CREATE INDEX form_representation_language_value ON form_representation (language, lower(value) text_pattern_ops);
+-- CREATE INDEX lemma_language_value               ON lemma (language, lower(left(value, 250)) text_pattern_ops);
+-- CREATE INDEX form_representation_language_value ON form_representation (language, lower(left(value, 250)) text_pattern_ops);
 --
 -- ANALYZE;
 -- COMMIT;

@@ -25,7 +25,7 @@ wikiload(지금 wikipg)로 geuldev의 스키마 `wikidata`에 적재한 판본�
 
 - 오류 3건(`load_error`)은 모두 값에 `\u0000`이 있어 jsonb에 담지 못한 P14457 클레임이다(Q683111, Q5152113, Q4873200). 적재 당시 wikiload(wikiport `330a10f`)는 값을 NULL로 두었다(원문 줄은 `entity_raw`에 있음). 지금 wikipg는 `value_json`에 둔다. 기존 적재분은 `sql/wikidata.sql` 4.0절로 열을 더하고 세 값을 채운다.
 - 두 행의 `loader`는 적재 당시 이름 `github.com/geul-org/wikiport/go/cmd/wikiload`다(저장소 wikiport, 명령 wikiload). gogeulwiki(wikigeul)는 옛 이름도 이 도구로 받는다.
-- `sql/wikidata.sql` 4절: 2026-10-27 PK·색인 진행 중(entity·label·alias·qualifier·description PK, `entity_dump_kind_num` 완료, `statement_entity` 진행), 출처 중복 정리·FK·나머지 색인은 그 뒤.
+- `sql/wikidata.sql` 4절: 2026-10-27 출처 중복 정리와 PK 전부, `entity_dump_kind_num`·`statement_entity`·`entity_raw_dump_line` 완료. `alias_language_value`가 btree 행 한도(2704바이트)를 넘는 옛 긴 별칭(4751자)으로 실패해, 레이블·별칭·표제어·어형 검색 색인을 앞 250자 `lower(left(value, 250))`로 바꿨다(질의 식은 4.3 주석). 나머지 색인·FK 검증은 재개 대기.
 
 다운로드 정보(dump 1):
 
