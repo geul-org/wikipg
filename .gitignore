@@ -3,3 +3,8 @@ tsma-results.jsonl
 session.json
 /wikipg
 cmd/wikipg/wikipg
+
+# 비밀 (보안 점검 2026-10-27)
+.env*
+*.key
+*.pem
