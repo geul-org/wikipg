@@ -1,6 +1,21 @@
-# 위키데이터 → GEUL 포팅
+# wikiport
 
-위키데이터 항목을 GEUL 문서로 옮겨 `.well-known/geul/` 아래에 공표한다. 출처·근거 기록(files/geul/sign.md, legacy.md)의 실전 시험대이기도 하다.
+위키데이터를 GEUL 문서로 옮기는 도구. 덤프를 PostgreSQL에 적재하고(`wikiload`), 항목을 GEUL 문서로 바꿔 `.well-known/geul/` 아래에 공표한다(`wikiport`). 출처·근거 기록(geul-dev files/geul/sign.md, legacy.md)의 실전 시험대이기도 하다.
+
+- 저장소: [geul-org/wikiport](https://github.com/geul-org/wikiport). 2026-10-27 `go/`를 루트로 올렸다. 모듈 경로는 `github.com/geul-org/wikiport`(옛 `github.com/geul-org/wikiport/go`).
+- 라이브러리: [geul-org/gogeul](https://github.com/geul-org/gogeul)(`go.mod`의 `replace ../gogeul`, geul-dev `draft/t002/` 아래에 나란히 둔다). 명세: [geul-org/geul-dev](https://github.com/geul-org/geul-dev) `draft/t002/docs/`.
+
+```
+cmd/wikiload/      덤프 → PostgreSQL 적재
+cmd/wikiport/      DB → GEUL 문서 공표
+internal/dump/     덤프 읽기(압축 해제·줄 나누기)
+internal/load/     적재 행 만들기·쓰기
+internal/source/   적재된 판 읽기(개체·클레임·qualifier·출처 기록)
+internal/port/     값 변환·문서 만들기·출처 기록
+internal/publish/  공표
+sql/wikidata.sql   적재 스키마(1~3절)와 적재 뒤 정리·제약·색인(4절)
+testdata/          DB 테스트 고정 자료(fixture.sql)
+```
 
 ## 원본 판본
 
@@ -17,9 +32,20 @@
 | 적재 도구 | `github.com/geul-org/geul-entity` `artifacts/wikidata/postgres.go`, 커밋 `4225b3b4297796a79e95c4cda5aa54df3acc4069` |
 | 적재 입력 | `/mnt/d/latest-all.json`(압축을 푼 파일). 지금은 없다(소실). 보관 파일과 같은 덤프로 본다 |
 
-## 새 덤프 (20261019, 적재 전)
+## 새 덤프 (20261019, 적재 완료)
 
-wikiload로 geuldev의 스키마 `wikidata`에 적재할 판본이다. 위 20250908 DB와 달리 판본·해시를 추정하지 않는다. 출처 기록은 적재 뒤 `dump` 행에서 읽는다.
+wikiload로 geuldev의 스키마 `wikidata`에 적재한 판본이다. 위 20250908 DB와 달리 판본·해시를 추정하지 않는다. 출처 기록은 `dump` 행에서 읽는다.
+
+| dump_id | 파일 | 개체 | 오류 | 적재 | 적재 도구 커밋 |
+|---|---|---|---|---|---|
+| 1 | `wikidata-20261019-all.json.bz2` | 121,971,281 | 3 | 2026-10-26 20:46 ~ 10-27 06:28 (KST) | `330a10fe3f2b84dd11994dbcaaa09888d4b16676` |
+| 2 | `wikidata-20261021-lexemes.json.bz2` (483,529,071 byte, SHA-256 `c1a98139bb49c616fdb9876206aa285a9ab72bda7f5595a406f269c29c9b9512`) | 1,707,632 | 0 | 2026-10-27 06:29 ~ 06:33 | `a03df92ea5813f2389c58cdbce26aedd04e74539` |
+
+- 오류 3건(`load_error`)은 모두 값에 `\u0000`이 있어 jsonb에 담지 못한 P14457 클레임이다(Q683111, Q5152113, Q4873200). 그 클레임만 빠지고 개체는 적재됐다.
+- 두 행의 `loader`는 옛 모듈 경로 `github.com/geul-org/wikiport/go/cmd/wikiload`다. wikiport는 옛 경로도 wikiload로 받는다.
+- `sql/wikidata.sql` 4절: 2026-10-27 PK·색인 진행 중(entity·label·alias·qualifier·description PK, `entity_dump_kind_num` 완료, `statement_entity` 진행), 출처 중복 정리·FK·나머지 색인은 그 뒤.
+
+다운로드 정보(dump 1):
 
 | 항목 | 값 |
 |---|---|
@@ -38,7 +64,7 @@ wikiload로 geuldev의 스키마 `wikidata`에 적재할 판본이다. 위 20250
 
 ### 0908 판의 빈칸 (legacy.md의 미상·소실·비공개)
 
-새 스키마(`wikidata.sql`)는 아래 빈칸을 대부분 메운다: 판본·해시(`dump`), 원본 줄(`entity_raw`), qualifier 순서(`ordinal`), novalue·somevalue(`snaktype`), 출처(`reference*`).
+새 스키마(`sql/wikidata.sql`)는 아래 빈칸을 대부분 메운다: 판본·해시(`dump`), 원본 줄(`entity_raw`), qualifier 순서(`ordinal`), novalue·somevalue(`snaktype`), 출처(`reference*`).
 
 | 항목 | 상태 |
 |---|---|
@@ -52,7 +78,7 @@ wikiload로 geuldev의 스키마 `wikidata`에 적재할 판본이다. 위 20250
 
 ## DB 테이블 (`geuldev.wikidata`)
 
-정의는 `wikidata.sql`이다. wikiport가 읽는 것:
+정의는 `sql/wikidata.sql`이다. wikiport가 읽는 것:
 
 | 테이블 | wikiport가 쓰는 열 |
 |---|---|
@@ -83,7 +109,7 @@ wikiload로 geuldev의 스키마 `wikidata`에 적재할 판본이다. 위 20250
   - 이름 색인 `documents.geul`은 하나이고 이름은 소문자 종류 글자 + 번호다(`q42`, `p31`).
   - Q·P를 가리키는 Reference(WIKIDATA-QID·PID)는 문서 위치와 상관없다. 바뀐 것은 문서가 놓이는 주소뿐이다.
 - **문서 단위:** QID 하나당 `.geul` 문서 하나.
-- **대상:** 우선 Q1 ~ Q1000. PID는 필요한 만큼 추가한다.
+- **대상:** Q1 ~ Q1000(0908 판으로 생성), 다음은 새 판으로 Q1 ~ Q10000. PID는 그 문서들이 쓴 만큼 옮긴다.
 - **레코드:** LABEL, DESCRIPTION, ALIAS, (속성이면) 데이터 타입, TRIPLE과 그 QUALIFIER를 작성한다(이 순서).
 - **값:** 항목(QID), 문자열, 외부 ID, URL·커먼즈(URI), 날짜, monolingualtext, 좌표, 수량(아래 값 변환 표). 처음 범위는 날짜까지였고 2026-10-26에 monolingualtext·좌표·URI·수량을 더했다. 그 밖의 값(Lexeme 등)은 변환하지 않았다고 기록한다.
 - **언어:** ko, en.
@@ -101,12 +127,12 @@ wikiload로 geuldev의 스키마 `wikidata`에 적재할 판본이다. 위 20250
   - 포팅 도구 wikiport(`0x0001000000000001`) `-commit`
   - GEUL 라이브러리 geul-lib(`0x0001000000000002`) `-lib-commit`. wikiport는 `go.mod`의 `replace`로 로컬 라이브러리를 쓰므로 wikiport 커밋만으로는 라이브러리 코드가 정해지지 않는다
 
-## 포팅 도구 (`wiki/go`)
+## 포팅 도구 (`cmd/wikiport`)
 
 ```sh
-cd draft/t002/wiki/go
+cd draft/t002/wikiport
 # DB 접속은 lib/pq의 PG* 환경변수(PGHOST, PGUSER, PGPASSWORD, PGDATABASE=geuldev, PGSSLMODE)로 한다.
-go run ./cmd/wikiport -root ../.. -from 1 -to 1000 -commit "$(git rev-parse HEAD)" -lib-commit "$(git -C ../../geul rev-parse HEAD)" -report report.tsv
+go run ./cmd/wikiport -root .. -from 1 -to 1000 -commit "$(git rev-parse HEAD)" -lib-commit "$(git -C ../gogeul rev-parse HEAD)" -report report.tsv
 ```
 
 | 플래그 | 뜻 | 기본값 |
@@ -121,19 +147,19 @@ go run ./cmd/wikiport -root ../.. -from 1 -to 1000 -commit "$(git rev-parse HEAD
 | `-schema` | 적재된 덤프의 스키마(wikiload `-schema`) | `wikidata` |
 | `-dump-id` | 읽을 판(wikiload `-dump-id`) | 1 |
 
-- Q 범위를 먼저 옮기고, 그 문서들이 쓴 속성(Predicate, 값이 속성 개체인 것)을 이어서 옮긴 뒤 두 Issuer의 `documents.geul`을 쓴다. 색인은 이번 실행분과 그 Issuer 디렉터리에 이미 공표된 문서를 모두 담는다(범위를 나눠 실행해도 앞 실행의 이름이 지워지지 않는다).
+- Q 범위를 먼저 옮기고, 그 문서들이 쓴 속성(Predicate, 값이 속성 개체인 것)을 이어서 옮긴 뒤 Issuer `0x00010000`의 `documents.geul`을 쓴다. 색인은 이번 실행분과 그 Issuer 디렉터리에 이미 공표된 문서를 모두 담는다(범위를 나눠 실행해도 앞 실행의 이름이 지워지지 않는다).
 - 공표는 개발 기간 동안 `resolve.Dir.Overwrite`다(2026-10-26 결정): 실행할 때마다 v1을 덮어쓰고 버전 목록도 v1 하나만 둔다. 버전을 쌓으면 용량을 감당할 수 없기 때문이다. 내용이 같으면 아무 파일도 바꾸지 않는다. 형식이 안정되면 `Publish`(버전 누적)로 돌아간다.
 
-## 적재 도구 (`wiki/go`, wikiload)
+## 적재 도구 (`cmd/wikiload`)
 
-덤프를 geuldev의 스키마 `wikidata`(`wiki/wikidata.sql`)에 적재한다. 0908 판에서 뽑은 `ko_term`·`lexeme`는 스키마 `wikidata0908`로 옮겼다(2026-10-26). 같은 DB라 stdict 등과 조인할 수 있다. 기존 `geuldev.public`(geul-entity `postgres.go`, 2026-10-26 삭제)을 대신한다. 원칙과 기존 스키마 대비 개선은 `wikidata.sql` 머리말에 있다.
+덤프를 geuldev의 스키마 `wikidata`(`sql/wikidata.sql`)에 적재한다. 0908 판에서 뽑은 `ko_term`·`lexeme`는 스키마 `wikidata0908`로 옮겼다(2026-10-26). 같은 DB라 stdict 등과 조인할 수 있다. 기존 `geuldev.public`(geul-entity `postgres.go`, 2026-10-26 삭제)을 대신한다. 원칙과 기존 스키마 대비 개선은 `sql/wikidata.sql` 머리말에 있다.
 
 ```sh
-cd draft/t002/wiki/go
+cd draft/t002/wikiport
 go run ./cmd/wikiload -in /mnt/d/geul/wikidata/wikidata-20261019-all.json.bz2 -commit "$(git rev-parse HEAD)"
 ```
 
-- 스키마: `psql -d geuldev -f wikidata.sql`은 1~3절(타입·테이블)만 만든다. 4절(재개 정리·출처 중복 정리·제약·색인)은 주석으로 되어 있고, 적재를 마친 뒤 주석을 풀어 실행한다.
+- 스키마: `psql -d geuldev -f sql/wikidata.sql`은 1~3절(타입·테이블)만 만든다. 4절(재개 정리·출처 중복 정리·제약·색인)은 주석으로 되어 있고, 적재를 마친 뒤 주석을 풀어 실행한다.
 - 테이블: `dump`(파일·URL·크기·MD5·SHA-1·SHA-256·적재 도구 커밋), `entity_raw`(덤프 줄 원문), `load_error`, `entity`, `label`, `description`, `alias`, `sitelink`, `statement`, `qualifier`, `reference`, `statement_reference`, `reference_snak`, Lexeme용 `lexeme`, `lemma`, `form`, `form_representation`, `sense`, `sense_gloss`. 개체 단위 테이블은 모두 `dump_id`를 가진다.
 - 기본값은 기계를 30% 남긴다: CPU 70% 중 1/5 압축 해제(lbzip2), 2/5 JSON 파싱, 작성자(DB 연결) 4, 배치 8 MiB(메모리 약 1 GB). 2026-10-26 측정에서 작성자 4·8 MiB가 가장 빨랐다.
 - Lexeme은 별도 덤프(`wikidata-YYYYMMDD-lexemes.json.bz2`)라 다른 판 번호로 적재한다: `-in …lexemes.json.bz2 -dump-id 2`. Form·Sense도 `entity`에 행(type `form`·`sense`, kind L)을 두어 그 statement(`entity_id` = `L4-F1`)가 가리킬 개체가 있다. 표제어·어형 표기는 낱말 자체라 `-langs`로 거르지 않고, 뜻풀이(gloss)는 거른다. Lexeme·Form·Sense의 statement 키는 한 줄 안에서 이어진다.
@@ -187,6 +213,14 @@ go run ./cmd/wikiload -in /mnt/d/geul/wikidata/wikidata-20261019-all.json.bz2 -c
   ```
   어휘는 위키데이터 RDF의 Wikibase 온톨로지 이름 그대로다(18종, files/geul/wikidata-datatype-mapping.md). 모르는 데이터 타입은 쓰지 않고 보고서 `skipped`에 남긴다. 문서당 약 50 WORD.
 - Edge Id(LOCAL ID)는 버전을 넘어 유지한다(docs OVERVIEW 개정). 다시 생성할 때 직전 공표본과 그 버전 목록의 `NEXT-LOCAL-ID`를 읽어(`resolve.Dir.Current`), 내용이 같은 서술은 같은 번호를, 바뀌거나 새로 생긴 서술은 다음 번호를 받는다(geul `delta.LocalIDs`). 사라진 번호는 다시 쓰지 않는다. 내용이 바뀐 클레임은 "삭제 + 신규"가 된다(개정 표지가 없다).
-- 클레임은 TRIPLE(Edge Id, Predicate, Subject, Object, Rank)이고, 그 qualifier는 바로 뒤에 QUALIFIER(Edge Id, Property, 대상 TRIPLE의 Edge Id, Value)로 잇는다. qualifier 값은 본 값과 같은 규칙으로 바꾼다(날짜 원문 보존 포함). 출처는 담지 않는다(DB에 없다).
-- qualifier 순서는 `triple_qualifiers`의 물리 행 순서(ctid)다. 같은 속성 안의 순서는 원본과 같지만 속성 사이 순서는 원본이 아니다(위 빈칸).
+- 클레임은 TRIPLE(Edge Id, Predicate, Subject, Object, Rank)이고, 그 qualifier는 바로 뒤에 QUALIFIER(Edge Id, Property, 대상 TRIPLE의 Edge Id, Value)로 잇는다. qualifier 값은 본 값과 같은 규칙으로 바꾼다(날짜 원문 보존 포함). 출처(references)는 새 DB에 적재돼 있지만 아직 옮기지 않는다.
+- qualifier 순서는 `qualifier.ordinal`(위키데이터 `qualifiers-order`, 원본 그대로)이다. 0908 판 DB는 속성 사이 순서를 잃었었다(위 빈칸).
 - TRANSFORMED-BY는 도구 Reference(EXTERNAL-ISSUER-1WORD, geul.org 용어 정의 문서의 LOCAL 2) + 커밋 SHA1-DIGEST다(2026-10-26). 커밋은 커밋된 소스여야 한다: 작업 트리에 커밋되지 않은 변경이 있으면 그 커밋 ID를 쓰지 말고 먼저 커밋한다(도구는 아직 검사하지 않는다).
+
+## 개발 규칙
+
+- filefunc(`codebook.yaml`, `filefunc validate .` 위반 0), TSMA, `go build`·`go vet`·`go test ./...` 통과. DB 테스트는 PG* 환경변수로 geuldev에 임시 스키마를 만들어 돌리고, 접속이 안 되면 건너뛴다.
+
+## 라이선스
+
+MIT([LICENSE](LICENSE)). 제3자 고지는 [NOTICE](NOTICE). 위키데이터 덤프와 wikiport가 만든 문서는 CC0.
