@@ -252,6 +252,26 @@ CREATE TABLE statement_reference (
 );
 
 -- 출처 묶음의 항목(snak). ordinal은 snaks-order를 따라 펼친 전체 순서.
+--
+-- hash 하나 = 출처 하나지만 snak 순서는 하나가 아니다. 위키베이스 출처 hash는 snaks-order와
+-- 같은 속성 안 값 순서에 무관해서, 같은 hash가 개체마다 다른 순서로 나온다(20261019 판 예: Q405
+-- 0888259a…가 한 곳에서 P854, P248, 다른 곳에서 P248, P854). 같은 hash의 다른 출현은 snak 집합이
+-- 같고 순서만 다를 수 있다. 이 표는 hash마다 **한 출현의 snak 목록을 통째로** 담는다(번호마다
+-- 다른 출현에서 고르면 목록이 섞인다, 2026-10-28 표본 검증 E1).
+--
+-- 출현 규칙(결정적): hash마다 덤프 순서상 첫 출현 = statement_reference의 (statement_id, ordinal)이
+-- 가장 작은 출현. statement_id = dump << 55 | 줄 번호 << 20 | 개체 안 순번이므로 차례로
+--   1. entity_raw.line_no가 가장 작은 개체,
+--   2. 그 안에서 적재기의 statement 순서(속성 ID 문자열 순, 같은 속성 안은 claims 배열 순;
+--      Lexeme은 Lexeme → Form → Sense 순),
+--   3. 그 statement의 references 배열 순서상 첫 번째.
+-- 이 규칙은 DB만으로 다시 계산된다(statement_reference). 출현마다의 순서는 entity_raw에만 남는다.
+-- 원문 순서가 필요하면 entity_raw의 그 개체 줄을 읽는다.
+--
+-- occ_statement_id, occ_ordinal은 적재 스테이징 열이다: 이 행을 쓴 출현(statement_reference의
+-- statement_id, ordinal). 적재기는 같은 hash를 여러 번(병렬 작업자·메모리 한도 때문에) 쓰지만
+-- 첫 출현은 반드시 쓴다(RefSet). 4.2가 hash마다 첫 출현의 행만 남기고 이 두 열을 뺀다.
+-- 4.2를 마친 표(2026-10-28 이전 적재분 포함)에는 이 열이 없다.
 CREATE TABLE reference_snak (
     hash           text      NOT NULL,
     dump_id        smallint  NOT NULL,
@@ -263,7 +283,9 @@ CREATE TABLE reference_snak (
     value_type     text,
     value          jsonb,
     value_entity   text,
-    value_json     text                                  -- jsonb가 못 담는 값(\u0000)의 JSON 원문
+    value_json     text,                                 -- jsonb가 못 담는 값(\u0000)의 JSON 원문
+    occ_statement_id bigint,                             -- 스테이징: 이 행을 쓴 출현의 statement_id (4.2에서 뺀다)
+    occ_ordinal      smallint                            -- 스테이징: 그 statement의 references 안 순서
 );
 
 COMMIT;
@@ -290,6 +312,11 @@ COMMIT;
 --
 -- 4.2 출처 묶음 중복 정리. 같은 출처(hash)를 여러 개체가 쓰므로, 적재 도구는 최근에 본
 --     hash만 기억해 거른다(메모리 한도). 남은 중복을 PRIMARY KEY 전에 지운다.
+--     reference_snak은 hash마다 **출현 하나를 통째로** 고른다: (occ_statement_id, occ_ordinal)이
+--     가장 작은 출현(위 reference_snak 주석의 출현 규칙)의 행 전부. 2026-10-27 실행분은 번호마다
+--     따로 고르는 DISTINCT ON (hash, dump_id, ordinal)이라 출현이 섞였다(표본 검증 E1). 그 DB는
+--     `wikipg repair-reference-snak`으로 고친다(README). 고른 출현 안의 DISTINCT ON은 재개 등으로
+--     같은 출현이 두 번 들어간 경우만 거른다.
 --
 -- BEGIN;
 -- SET search_path = wikidata;
@@ -297,7 +324,15 @@ COMMIT;
 -- INSERT INTO reference_dedup SELECT DISTINCT ON (hash, dump_id) * FROM reference;
 -- DROP TABLE reference; ALTER TABLE reference_dedup RENAME TO reference;
 -- CREATE TABLE reference_snak_dedup (LIKE reference_snak);
--- INSERT INTO reference_snak_dedup SELECT DISTINCT ON (hash, dump_id, ordinal) * FROM reference_snak;
+-- ALTER TABLE reference_snak_dedup DROP COLUMN occ_statement_id, DROP COLUMN occ_ordinal;
+-- INSERT INTO reference_snak_dedup
+--   SELECT DISTINCT ON (s.hash, s.dump_id, s.ordinal) s.hash, s.dump_id, s.ordinal, s.property, s.value_ordinal,
+--          s.snaktype, s.datatype, s.value_type, s.value, s.value_entity, s.value_json
+--   FROM reference_snak s
+--   JOIN (SELECT DISTINCT ON (hash, dump_id) hash, dump_id, occ_statement_id, occ_ordinal
+--         FROM reference_snak ORDER BY hash, dump_id, occ_statement_id, occ_ordinal) f
+--     USING (hash, dump_id, occ_statement_id, occ_ordinal)
+--   ORDER BY s.hash, s.dump_id, s.ordinal;
 -- DROP TABLE reference_snak; ALTER TABLE reference_snak_dedup RENAME TO reference_snak;
 -- COMMIT;
 --
@@ -345,6 +380,10 @@ COMMIT;
 -- 색인 범위가 빠지므로 필요하면 SET plan_cache_mode = force_custom_plan을 쓴다.
 -- jsonb value 안쪽(quantity 단위, 시간 정밀도 등) 질의는 색인을 두지 않았다. 필요해지면
 -- 표현식 색인(예: (value->>'unit') WHERE value_type = 'quantity')을 추가한다.
+-- statement_guid는 UNIQUE가 아니다. 위키데이터 원본에 같은 statement GUID가 두 statement에 쓰인 경우가 있다
+-- (20261019 판: Q34433114 P953 두 statement가 guid Q34433114$684DE268-387D-4E42-8BD8-394C5C36D10C를 함께 쓴다).
+-- 적재는 원본을 그대로 담으므로 statement 키는 statement_id(줄·순번)이고 guid는 찾기용 색인이다.
+-- 같은 이유로 sitelink_site_title도 UNIQUE가 아니다(아래).
 -- sitelink_site_title은 UNIQUE가 아니다. 덤프는 몇 시간에 걸쳐 만들어져 그사이의 문서 이동·병합으로
 -- 같은 (site, title)이 두 개체에 남을 수 있다(20261019 판: 145쌍 290행, 예 commonswiki의 Q1381027·Q141775567).
 --
@@ -386,7 +425,7 @@ COMMIT;
 --
 -- CREATE UNIQUE INDEX entity_raw_dump_line        ON entity_raw (dump_id, line_no);
 -- CREATE INDEX entity_dump_kind_num               ON entity (dump_id, kind, num);
--- CREATE UNIQUE INDEX statement_guid              ON statement (guid, dump_id);
+-- CREATE INDEX statement_guid                     ON statement (guid, dump_id);
 -- CREATE INDEX statement_entity                   ON statement (entity_id, dump_id, property, ordinal);
 -- CREATE INDEX statement_property_value           ON statement (property, value_entity);
 -- CREATE INDEX statement_value_entity             ON statement (value_entity) WHERE value_entity IS NOT NULL;

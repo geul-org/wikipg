@@ -9,3 +9,10 @@ import _ "embed"
 //
 //go:embed wikidata.sql
 var Schema string
+
+// RepairReferenceSnak is repair_reference_snak.sql: the work tables of
+// `wikipg repair-reference-snak` (hashes done, checkpoints), created in the
+// search_path schema.
+//
+//go:embed repair_reference_snak.sql
+var RepairReferenceSnak string

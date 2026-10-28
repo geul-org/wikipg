@@ -7,7 +7,7 @@ package load
 func NewRefSet(limit int) *RefSet {
 	s := &RefSet{limit: max(limit/64, 1)}
 	for i := range s.shards {
-		s.shards[i].seen = map[string]struct{}{}
+		s.shards[i].seen = map[string]Occurrence{}
 	}
 	return s
 }

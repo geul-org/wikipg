@@ -1,5 +1,5 @@
 //ff:func feature=cli type=command control=sequence
-//ff:what TestRunLoad — a small dump loads end to end (plain and .bz2), \u0000 values kept in *_json, a limit stops early, a rerun resumes after the checkpoint without duplicates; bad flags, an unreachable database, a broken schema on resume and a missing decompressor fail
+//ff:what TestRunLoad — a small dump loads end to end (plain and .bz2), \u0000 values kept in *_json, a limit stops early, a rerun resumes after the checkpoint without duplicates; bad flags, an unparsable DSN, an unreachable database, a broken schema on resume and a missing decompressor fail
 package main
 
 import (
@@ -28,9 +28,13 @@ func TestRunLoad(t *testing.T) {
 	var line, ents, errs int64
 	var done bool
 	db.QueryRow("SELECT checkpoint_line, entity_count, error_count, load_finished IS NOT NULL FROM "+schema+".dump").Scan(&line, &ents, &errs, &done)
-	// The resumed run starts with an empty RefSet, so the shared source r1 is
-	// written once per run (wikidata.sql 4.2 removes the duplicate).
-	if count("entity") != 6 || count("statement") != 6 || count("qualifier") != 6 || count("reference") != 2 || line != 8 || ents != 6 || errs != 1 || !done {
+	// The resumed run starts with an empty RefSet, and parallel parsers may
+	// meet an earlier occurrence after a later one, so the shared source r1 is
+	// written at least once per run (wikidata.sql 4.2 removes the duplicates),
+	// and always at its first occurrence (Q1 on line 2, statement 0, reference 0).
+	var firstOcc int64
+	db.QueryRow("SELECT min(occ_statement_id) FROM " + schema + ".reference_snak WHERE hash = 'r1' AND occ_ordinal = 0").Scan(&firstOcc)
+	if count("entity") != 6 || count("statement") != 6 || count("qualifier") != 6 || count("reference") < 2 || firstOcc != 1<<55|2<<20 || line != 8 || ents != 6 || errs != 1 || !done {
 		t.Fatalf("resumed: entity %d statement %d qualifier %d reference %d line %d ents %d errs %d done %v",
 			count("entity"), count("statement"), count("qualifier"), count("reference"), line, ents, errs, done)
 	}
@@ -61,6 +65,9 @@ func TestRunLoad(t *testing.T) {
 	}
 	if err := runLoad(nil); err == nil {
 		t.Fatal("no flags: want error")
+	}
+	if err := runLoad([]string{"-dsn", "host='x", "-commit", "test", "-in", p}); err == nil {
+		t.Fatal("unparsable DSN: want error")
 	}
 	if err := runLoad([]string{"-dsn", "host=/nonexistent", "-commit", "test", "-in", p}); err == nil {
 		t.Fatal("unreachable database: want error")

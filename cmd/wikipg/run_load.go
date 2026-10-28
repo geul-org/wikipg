@@ -10,7 +10,7 @@ import (
 	"syscall"
 	"time"
 
-	_ "github.com/lib/pq"
+	"github.com/lib/pq"
 
 	"github.com/geul-org/wikipg/internal/load"
 )
@@ -27,10 +27,11 @@ func runLoad(args []string) error {
 	if err != nil {
 		return err
 	}
-	db, err := sql.Open("postgres", c.DSN)
+	conn, err := pq.NewConnector(c.DSN)
 	if err != nil {
 		return err
 	}
+	db := sql.OpenDB(conn)
 	defer db.Close()
 	db.SetMaxOpenConns(c.Writers + 2)
 	if err := load.InsertDump(db, c.Schema, c.Dump); err != nil {

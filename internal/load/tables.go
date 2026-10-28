@@ -18,7 +18,7 @@ func tables() []table {
 		{"qualifier", append([]string{"statement_id", "ordinal", "property", "value_ordinal"}, append(snak, "hash")...)},
 		{"reference", []string{"hash", "dump_id"}},
 		{"statement_reference", []string{"statement_id", "ordinal", "hash"}},
-		{"reference_snak", append([]string{"hash", "dump_id", "ordinal", "property", "value_ordinal"}, snak...)},
+		{"reference_snak", append(append([]string{"hash", "dump_id", "ordinal", "property", "value_ordinal"}, snak...), "occ_statement_id", "occ_ordinal")},
 		{"lexeme", []string{"entity_id", "dump_id", "language", "lexical_category"}},
 		{"lemma", []string{"entity_id", "dump_id", "language", "value", "value_json"}},
 		{"form", []string{"entity_id", "lexeme_id", "dump_id", "ordinal", "grammatical_features"}},
