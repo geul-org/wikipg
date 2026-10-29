@@ -18,16 +18,17 @@ sql/schema.go      wikidata.sql을 embed한 패키지(다른 모듈의 테스트
 
 ## 적재한 판 (20261019, 적재 완료)
 
-wikiload(지금 wikipg)로 geuldev의 스키마 `wikidata`에 적재한 판본이다. 위 20250908 DB와 달리 판본·해시를 추정하지 않는다. 출처 기록은 `dump` 행에서 읽는다.
+wikipg로 geuldev의 스키마 `wikidata`에 적재한 판본이다. 위 20250908 DB와 달리 판본·해시를 추정하지 않는다. 출처 기록은 `dump` 행에서 읽는다.
 
 | dump_id | 파일 | 개체 | 오류 | 적재 | 적재 도구 커밋 |
 |---|---|---|---|---|---|
-| 1 | `wikidata-20261019-all.json.bz2` | 121,971,281 | 3 | 2026-10-26 20:46 ~ 10-27 06:28 (KST) | `330a10fe3f2b84dd11994dbcaaa09888d4b16676` |
-| 2 | `wikidata-20261021-lexemes.json.bz2` (483,529,071 byte, SHA-256 `c1a98139bb49c616fdb9876206aa285a9ab72bda7f5595a406f269c29c9b9512`) | 1,707,632 | 0 | 2026-10-27 06:29 ~ 06:33 | `a03df92ea5813f2389c58cdbce26aedd04e74539` |
+| 1 | `wikidata-20261019-all.json.bz2` | 121,971,281 | 0 | 2026-10-28 12:39 ~ 16:54 (KST) | `a2fa225720c27d22dcc18171fd268b8d1e7b6d94` |
+| 2 | `wikidata-20261021-lexemes.json.bz2` (483,529,071 byte, SHA-256 `c1a98139bb49c616fdb9876206aa285a9ab72bda7f5595a406f269c29c9b9512`) | 1,707,632 | 0 | 2026-10-28 16:54 ~ 16:57 | `a2fa225720c27d22dcc18171fd268b8d1e7b6d94` |
 
-- 오류 3건(`load_error`)은 모두 값에 `\u0000`이 있어 jsonb에 담지 못한 P14457 클레임이다(Q683111, Q5152113, Q4873200). 적재 당시 wikiload(wikiport `330a10f`)는 값을 NULL로 두었다(원문 줄은 `entity_raw`에 있음). 지금 wikipg는 `value_json`에 둔다. 기존 적재분은 `sql/wikidata.sql` 4.0절로 열을 더하고 세 값을 채운다.
-- 두 행의 `loader`는 적재 당시 이름 `github.com/geul-org/wikiport/go/cmd/wikiload`다(저장소 wikiport, 명령 wikiload). gogeulwiki(wikigeul)는 옛 이름도 이 도구로 받는다.
-- `sql/wikidata.sql` 4절: 2026-10-27 출처 중복 정리(이 정리가 reference_snak을 섞었다: 아래 "출처 snak 결함과 복구")와 PK 전부, `entity_dump_kind_num`·`statement_entity`·`entity_raw_dump_line` 완료. `alias_language_value`가 btree 행 한도(2704바이트)를 넘는 옛 긴 별칭(4751자)으로 실패해, 레이블·별칭·표제어·어형 검색 색인을 앞 250자 `lower(left(value, 250))`로 바꿨다(질의 식은 4.3 주석). 나머지 색인·FK 검증은 재개 대기.
+- 2026-10-28 재적재. 옛 적재분(2026-10-26~27, wikiload `330a10f`·`a03df92`, 오류 3건)은 출처 snak 결함(아래) 때문에 스키마째 지우고, PG 데이터를 WSL ext4로 옮긴 뒤 a2fa225로 처음부터 다시 적재했다. `-langs all`, lbzip2 압축 해제. dump 1은 4h15m(평균 7,963 개체/s), dump 2는 2m36s.
+- 오류 0: 옛 적재의 오류 3건(Q683111·Q5152113·Q4873200의 P8189 클레임에 붙은 P14457 qualifier, 값에 `\u0000`)은 이제 `qualifier.value_json`에 담긴다(세 건 확인). 두 행의 `loader`는 `github.com/geul-org/wikipg/cmd/wikipg`다.
+- `sql/wikidata.sql` 4절(65문장: 출처 중복 정리 → PK → 색인 → FK NOT VALID·VALIDATE → ANALYZE) 전부 완료, 2026-10-28 16:57 ~ 10-29 02:07(9h10m). 스키마 2,031 GB(색인 577 GB).
+- 검증(10-29): `repair-reference-snak -dry-run`을 `-entities Q1-Q10000`·`P1-P14977`로 돌려 hash 교체 0, 내용 차이 0, statement_reference 차이 0. 표본 검증 E1의 Q30 P463 출처(`bff6d2f7…`)에 `P123 Q7809`가 있다.
 
 다운로드 정보(dump 1):
 
