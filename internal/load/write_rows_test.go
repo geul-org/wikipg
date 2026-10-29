@@ -1,8 +1,10 @@
 //ff:func feature=load type=writer control=sequence
-//ff:what TestWriteRows — the sample item lands in every table with jsonb values and arrays intact; a closed handle and a missing schema fail; a lexeme lands in its tables
+//ff:what TestWriteRows — the sample item lands in every table with jsonb values and arrays intact; a closed handle, a refused SET LOCAL (rolled back) and a missing schema fail; a lexeme lands in its tables
 package load
 
 import (
+	"database/sql"
+	"strings"
 	"testing"
 )
 
@@ -34,6 +36,12 @@ func TestWriteRows(t *testing.T) {
 	}
 	if err := WriteRows(closedDB(t), schema, r); err == nil {
 		t.Fatal("closed: want error")
+	}
+	fail := &execFailConn{}
+	failDB := sql.OpenDB(fail)
+	defer failDB.Close()
+	if err := WriteRows(failDB, schema, r); err == nil || !strings.Contains(err.Error(), "statement refused") || fail.Rollbacks != 1 {
+		t.Fatalf("refused SET LOCAL: %v, rollbacks %d", err, fail.Rollbacks)
 	}
 	if err := WriteRows(db, schema+"_none", r); err == nil {
 		t.Fatal("missing schema: want error")

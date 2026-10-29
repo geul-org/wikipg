@@ -1,5 +1,5 @@
 //ff:func feature=repair type=writer control=sequence
-//ff:what testSchema — a throwaway schema of sql/wikidata.sql, dropped after the test; skips when the database is not reachable
+//ff:what testSchema — a throwaway schema of sql/wikidata.sql, named tsma_test_*, dropped after the test; skips when the database is not reachable
 package repair
 
 import (
@@ -31,8 +31,12 @@ func testSchema(t *testing.T) (*sql.DB, string) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	name := fmt.Sprintf("wikidata_test_%d", time.Now().UnixNano())
-	ddl := strings.Replace(string(b), "CREATE SCHEMA IF NOT EXISTS wikidata;\nSET search_path = wikidata;", "CREATE SCHEMA "+name+";\nSET search_path = "+name+";", 1)
+	name := fmt.Sprintf("tsma_test_%d", time.Now().UnixNano())
+	head := "CREATE SCHEMA IF NOT EXISTS wikidata;\nSET search_path = wikidata;"
+	if !strings.Contains(string(b), head) {
+		t.Fatal("sql/wikidata.sql: schema header not found; refusing to run the DDL outside a test schema")
+	}
+	ddl := strings.Replace(string(b), head, "CREATE SCHEMA "+name+";\nSET search_path = "+name+";", 1)
 	if _, err := db.Exec(ddl); err != nil {
 		t.Fatal(err)
 	}

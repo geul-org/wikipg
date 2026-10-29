@@ -1,12 +1,14 @@
 //ff:func feature=cli type=helper control=sequence
-//ff:what TestOpenInput — a plain file and a .bz2 (bzip2, and an lbzip2 given -n threads) read the same bytes; a missing program or file fails, a bad .bz2 fails on close
+//ff:what TestOpenInput — a plain file and a .bz2 (bzip2, and an lbzip2 given -n threads) read the same bytes; a missing program or file fails, no free file descriptor for the pipe fails, a bad .bz2 fails on close
 package main
 
 import (
+	"errors"
 	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"syscall"
 	"testing"
 )
 
@@ -41,6 +43,28 @@ func TestOpenInput(t *testing.T) {
 	}
 	if _, err := openInput(p+".bz2", "no-such-decompressor", 1); err == nil {
 		t.Fatal("missing program: want error")
+	}
+	// The stdout pipe needs two new descriptors: with the soft limit at the
+	// lowest free descriptor number, the kernel has none to give (EMFILE).
+	var lim syscall.Rlimit
+	if err := syscall.Getrlimit(syscall.RLIMIT_NOFILE, &lim); err != nil {
+		t.Fatal(err)
+	}
+	probe, err := os.Open(os.DevNull)
+	if err != nil {
+		t.Fatal(err)
+	}
+	low := uint64(probe.Fd())
+	probe.Close()
+	if err := syscall.Setrlimit(syscall.RLIMIT_NOFILE, &syscall.Rlimit{Cur: low, Max: lim.Max}); err != nil {
+		t.Fatal(err)
+	}
+	r, err = openInput(p+".bz2", "bzip2", 1)
+	if err := syscall.Setrlimit(syscall.RLIMIT_NOFILE, &lim); err != nil {
+		t.Fatal(err)
+	}
+	if r != nil || !errors.Is(err, syscall.EMFILE) {
+		t.Fatalf("no free descriptor: %v %v", r, err)
 	}
 	if _, err := openInput(filepath.Join(t.TempDir(), "none.json"), "bzip2", 1); err == nil {
 		t.Fatal("missing: want error")
