@@ -1,10 +1,11 @@
 //ff:func feature=repair type=command control=iteration dimension=1
-//ff:what TestRun — a dry run reports the damage without writing; a write repairs each hash to its first occurrence, an entity range first and a line range after; a rerun resumes past the checkpoint; failures and a stop are returned
+//ff:what TestRun — a dry run reports the damage without writing; a write repairs each hash to its first occurrence, an entity range first and a line range after; a rerun resumes past the checkpoint; a checkpoint table without the key (dump_id, run), failures and a stop are returned
 package repair
 
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 )
 
@@ -71,14 +72,15 @@ func TestRun(t *testing.T) {
 	}
 	db.Exec("DROP TABLE " + c.Schema + ".repair_reference_snak_checkpoint")
 	db.Exec("CREATE TABLE " + c.Schema + ".repair_reference_snak_checkpoint (run text)")
-	if _, err := Run(context.Background(), db, c); err == nil {
-		t.Fatal("broken checkpoint table: want error")
+	if _, err := Run(context.Background(), db, c); err == nil || !strings.Contains(err.Error(), "migrate_checkpoint_key.sql") {
+		t.Fatalf("checkpoint table without the key (dump_id, run): %v", err)
 	}
 	none.DryRun = true
 	if _, err := Run(context.Background(), db, none); err == nil {
 		t.Fatal("dry run without tables: want error")
 	}
 	c.DryRun = true
+	db.Exec("DROP TABLE " + c.Schema + ".repair_reference_snak_checkpoint")
 	db.Exec("ALTER TABLE " + c.Schema + ".statement_reference RENAME TO gone")
 	if _, err := Run(context.Background(), db, c); err == nil {
 		t.Fatal("failed batch: want error")

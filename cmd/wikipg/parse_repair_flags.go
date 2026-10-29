@@ -1,5 +1,5 @@
 //ff:func feature=cli type=command control=sequence
-//ff:what parseRepairFlags — repair-reference-snak's command line: range by lines or entities, dry run, batch, workers, pace; defaults keep 30% of the machine free
+//ff:what parseRepairFlags — the command line of repair-reference-snak and build-reference-order: range by lines or entities, dry run, batch, workers, pace; defaults keep 30% of the machine free
 package main
 
 import (
@@ -10,14 +10,15 @@ import (
 	"time"
 )
 
-// parseRepairFlags reads the arguments of wikipg repair-reference-snak. The
+// parseRepairFlags reads the arguments of wikipg repair-reference-snak or
+// build-reference-order (name, the command shown in usage and errors). The
 // range is -from-line/-to-line (default: the whole dump) or -entities
 // (Q1-Q10000), not both. The defaults keep the machine about 30% free: 70%
 // of the CPUs, half of it for the workers (each parses in Go while its
 // database connection decompresses the lz4 raw lines) and half left to the
 // server, batches of 1000 lines.
-func parseRepairFlags(args []string) (repairFlags, error) {
-	fs := flag.NewFlagSet("wikipg repair-reference-snak", flag.ContinueOnError)
+func parseRepairFlags(name string, args []string) (repairFlags, error) {
+	fs := flag.NewFlagSet(name, flag.ContinueOnError)
 	var f repairFlags
 	c := &f.Config
 	var id int

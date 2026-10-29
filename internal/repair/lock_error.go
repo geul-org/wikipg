@@ -5,10 +5,10 @@ package repair
 import "errors"
 
 // lockError returns err when the lock query failed, otherwise the error that
-// another writing run holds the lock.
+// another writing run (repair or order build, one lock) holds the lock.
 func lockError(err error) error {
 	if err != nil {
 		return err
 	}
-	return errors.New("repair: another repair-reference-snak run holds the lock")
+	return errors.New("repair: another repair-reference-snak or build-reference-order run holds the lock")
 }

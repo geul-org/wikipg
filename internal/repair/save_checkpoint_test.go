@@ -1,5 +1,5 @@
 //ff:func feature=repair type=writer control=iteration dimension=1
-//ff:what TestSaveCheckpoint — inserts, then moves the run's line; a missing table fails
+//ff:what TestSaveCheckpoint — inserts, then moves the run's line, in the checkpoint table of the run's mode; a missing table fails
 package repair
 
 import "testing"
@@ -17,8 +17,22 @@ func TestSaveCheckpoint(t *testing.T) {
 	if n, _ := readCheckpoint(db, c); n != 5 {
 		t.Fatalf("line %d", n)
 	}
-	c.Schema += "_none"
+	order := c
+	order.Order = true
+	ensureTables(db, order)
 	tx, _ := db.Begin()
+	if err := saveCheckpoint(tx, order, 2); err != nil {
+		t.Fatal(err)
+	}
+	tx.Commit()
+	if n, _ := readCheckpoint(db, order); n != 2 {
+		t.Fatalf("order line %d", n)
+	}
+	if n, _ := readCheckpoint(db, c); n != 5 {
+		t.Fatalf("repair line moved: %d", n)
+	}
+	c.Schema += "_none"
+	tx, _ = db.Begin()
 	defer tx.Rollback()
 	if err := saveCheckpoint(tx, c, 1); err == nil {
 		t.Fatal("missing table: want error")

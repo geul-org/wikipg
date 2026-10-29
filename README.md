@@ -12,7 +12,9 @@ internal/dump/     덤프 읽기(압축 해제·줄 나누기·개체 디코딩)
 internal/load/     적재 행 만들기·COPY·판과 체크포인트 기록
 sql/wikidata.sql   적재 스키마(1~3절)와 적재 뒤 정리·제약·색인(4절)
 sql/repair_reference_snak.sql  repair-reference-snak 작업 표(처리한 hash, 체크포인트)
-internal/repair/   reference_snak 복구(entity_raw 대조·교체)
+sql/reference_snak_order.sql   build-reference-order 표(출현별 출처 snak 순서, 체크포인트)
+sql/migrate_checkpoint_key.sql 옛 체크포인트 표(키 run뿐)를 키 (dump_id, run)으로 옮기기(2026-10-29)
+internal/repair/   reference_snak 복구(entity_raw 대조·교체)와 출현별 순서 만들기(build-reference-order)
 sql/schema.go      wikidata.sql을 embed한 패키지(다른 모듈의 테스트가 import: github.com/geul-org/wikipg/sql)
 ```
 
@@ -43,7 +45,7 @@ wikipg로 geuldev의 스키마 `wikidata`에 적재한 판본이다. 위 2025090
 ## 출처 snak 결함과 복구 (2026-10-28)
 
 - **결함.** 위키베이스 출처 hash는 snak 순서와 무관해서, 같은 hash가 개체마다 다른 snaks-order로 나온다. 적재기는 출현마다 `reference_snak` 행을 넣었고, 4.2 정리가 `DISTINCT ON (hash, dump_id, ordinal)`로 **번호마다 따로** 골라 서로 다른 출현의 행을 섞었다(표본 검증 E1: Q1–Q10000 출처 435,343개 중 420개 내용이 다름, 예 Q30 P463 출처에서 `P123 Q7809`가 빠지고 `P813`이 두 번). 스키마가 "hash → 순서 있는 snak 목록 하나"를 가정한 것이 틀렸다. `statement_reference`·`reference`는 영향이 없다(복구 도구가 대조한다).
-- **출현 규칙(결정적).** `reference_snak`은 hash마다 **한 출현의 snak 목록을 통째로** 담는다. 그 출현은 덤프 순서상 첫 출현, 곧 `statement_reference`의 `(statement_id, ordinal)`이 가장 작은 출현이다: `entity_raw.line_no`가 가장 작은 개체 → 그 안의 적재기 statement 순서(속성 ID 문자열 순, 같은 속성 안은 배열 순; Lexeme → Form → Sense) → references 배열 순서. 같은 hash의 다른 출현은 snak 집합이 같고 순서만 다를 수 있다. 출현별 순서는 `entity_raw`에만 남는다(`sql/wikidata.sql` reference_snak 주석).
+- **출현 규칙(결정적).** `reference_snak`은 hash마다 **한 출현의 snak 목록을 통째로** 담는다. 그 출현은 덤프 순서상 첫 출현, 곧 `statement_reference`의 `(statement_id, ordinal)`이 가장 작은 출현이다: `entity_raw.line_no`가 가장 작은 개체 → 그 안의 적재기 statement 순서(속성 ID 문자열 순, 같은 속성 안은 배열 순; Lexeme → Form → Sense) → references 배열 순서. 같은 hash의 다른 출현은 snak 집합이 같고 순서만 다를 수 있다. 그런 출현의 순서는 `reference_snak_order`가 출현마다 둔다(아래 "출현별 출처 snak 순서", 2026-10-29). 그 전에는 `entity_raw`에만 있었다(`sql/wikidata.sql` reference_snak 주석).
 - **적재기 수정.** `reference_snak`에 스테이징 열 `occ_statement_id`·`occ_ordinal`(그 행을 쓴 출현)을 함께 적재한다. `RefSet`은 hash마다 기록한 가장 이른 출현을 기억해, 병렬 파서가 더 이른 출현을 늦게 만나도 다시 쓴다(첫 출현은 반드시 기록; 메모리는 종전처럼 상한). 4.2는 hash마다 가장 작은 출현의 행만 남기고 두 열을 뺀다. 재개 시 `ClearAfter`가 지운 줄의 출현 행도 지운다.
 - **복구 도구** `wikipg repair-reference-snak` (이미 4.2를 거친 DB용). `entity_raw`를 줄 순서로 배치마다 읽어(작업자 병렬, 적용은 줄 순서) 출현마다 적재기와 같은 행을 만들고, hash마다 범위 안 첫 출현의 목록을 DB와 비교해 다르면 그 hash의 행을 트랜잭션 안에서 바꾼다. 처리한 hash와 출현은 `repair_reference_snak_done`, 재개 지점은 `repair_reference_snak_checkpoint`(`sql/repair_reference_snak.sql`, 쓰기 실행 때 만든다). 배치의 교체·처리 표·체크포인트가 한 트랜잭션이라 중단해도 정확히 이어진다. 같은 패스에서 `statement_reference`를 원본과 비교해 차이를 보고만 한다.
 
@@ -54,12 +56,53 @@ go build -o /tmp/wikipg ./cmd/wikipg
 /tmp/wikipg repair-reference-snak -from-line 2 -to-line 1000000 -batch 1000 -workers 9 -pause 0 -status 30s
 ```
 
-  - 범위: `-from-line/-to-line`(기본 전체) 또는 `-entities Q1-Q10000`. 체크포인트는 범위 이름(`lines:0-0`, `entities:Q1-Q10000`)마다 따로다. 구간은 어떤 순서로 돌려도 전 구간을 마치면 hash마다 덤프 첫 출현이 된다(더 이른 출현이 오면 처리 표의 출현보다 앞서므로 다시 처리). 줄 순서대로 전 구간을 돌리면 hash마다 정확히 한 번 처리한다.
+  - 범위: `-from-line/-to-line`(기본 전체) 또는 `-entities Q1-Q10000`. 체크포인트는 판과 범위 이름(`lines:0-0`, `entities:Q1-Q10000`)마다 따로다(키 `(dump_id, run)`). 시작할 때 그 판·범위의 체크포인트를 stderr에 적는다(dry-run은 적기만 하고 처음부터 돈다). 구간은 어떤 순서로 돌려도 전 구간을 마치면 hash마다 덤프 첫 출현이 된다(더 이른 출현이 오면 처리 표의 출현보다 앞서므로 다시 처리). 줄 순서대로 전 구간을 돌리면 hash마다 정확히 한 번 처리한다.
   - `-dry-run`은 `default_transaction_read_only=on` 세션으로 아무것도 쓰지 않는다(처리 표 대신 메모리, `-ref-limit`). 쓰기 실행은 스키마별 advisory lock으로 하나만 돈다.
   - 세션은 `jit=off`, `enable_seqscan=off`, `max_parallel_workers_per_gather=0`(동시 질의 수 = 작업자 수, 쓰기 때 적용기 1개 더). 질의는 모두 색인 조회다: entity_raw `(dump_id, line_no)`(구간은 범위 하나, 개체 목록은 줄마다 조회), statement_reference PK(줄마다 키 범위), reference_snak PK와 처리 표 PK(hash마다 한 번), 교체 DELETE(hash마다 PK 조회한 ctid). 목록은 모두 `unnest(배열) CROSS JOIN LATERAL (… OFFSET 0)`로 준다. 수만 개 hash를 `= ANY(배열)`로 주면 플래너가 행 수를 수천만으로 잡아 135GB 병렬 순차 탐색을 골랐다(2026-10-28 실측, dry-run 질의 하나가 8분 넘게 걸려 중단).
   - 기본 작업자 = CPU의 70%의 절반(28코어에서 9), 배치 1000줄. 4절 색인 생성 등 다른 큰 작업과 겹치면 `-workers 7`로 동시 질의를 8개 이하로 둔다. 보고: hash별 판정(same·order·content·missing), 출현별 비교(그 문서의 덤프 순서와 DB 비교, 표본 검증 E1·S10과 같은 단위), statement_reference 차이.
 - **색인.** 행 교체(DELETE + INSERT)는 같은 트랜잭션에서 `reference_snak_pkey`·`reference_snak_value_entity`를 함께 갱신하므로 재색인이 필요 없다. PK가 hash 안 번호 중복을 막는다. 교체한 hash 수만큼 죽은 튜플이 생기니 끝난 뒤 `VACUUM (ANALYZE) wikidata.reference_snak`을 돌린다. 작업 표 두 개는 결과를 확인한 뒤 지운다.
 - 복구 뒤 gogeulwiki 문서를 다시 만든다(표본 검증: 내용이 바뀌는 문서 214개, 순서까지 최대 370개).
+
+## 출현별 출처 snak 순서 (2026-10-29)
+
+`reference_snak`은 hash마다 첫 출현의 snak 목록 하나다. 그래서 같은 hash를 다른 순서(속성 순서, 같은 속성 안 값 순서)로 쓴 출현은 원문 순서를 잃었다(2026-10-29 재변환 검증 S10: Q1–Q10000 문서 122개 246줄, DB 출현 900개). `wikipg build-reference-order`가 그 출현들의 순서를 `entity_raw`에서 다시 만들어 `reference_snak_order`에 둔다. 덤프 파일은 읽지 않는다.
+
+- **표** `reference_snak_order(statement_id, ordinal, perm smallint[])`, PK `(statement_id, ordinal)`(`sql/reference_snak_order.sql`).
+  - 키는 `statement_reference`와 같다. 출현 하나 = 그 표의 한 행이다.
+  - `dump_id` 열이 없다. `statement_reference`처럼 `statement_id`(dump << 55 | 줄 << 20 | 순번)에 판이 들어 있다.
+  - `perm[i]` = 그 출현의 i번째 snak이 `reference_snak`에서 갖는 `ordinal`이다. 곧 `reference_snak`의 ordinal을 그 출현 순서로 늘어놓은 순열이다. 같은 내용의 snak이 둘이면 저장 순서대로 짝짓는다.
+  - 행은 내용이 같고 순서만 다른 출현에만 둔다. 행이 없으면 `reference_snak` 순서 그대로다. 내용이 다른 출현은 순열이 없으므로 쓰지 않고 보고한다.
+  - 읽기: `ORDER BY coalesce(array_position(o.perm, s.ordinal) - 1, s.ordinal)`. `o`는 `(statement_id, ordinal)` PK 조회다(gogeulwiki는 `LEFT JOIN LATERAL (… OFFSET 0)`).
+  - FK는 두지 않았다. `statement_reference`(13억 행)를 참조하는 FK를 걸면 그 표에 RI 트리거와 잠금이 생긴다. 이미 적재된 표의 정의를 바꾸지 않기로 했다. 대신 도구가 같은 배치에서 그 줄들의 `statement_reference`를 DB와 대조한다. 확인 질의는 SQL 주석에 있다.
+- **도구** `wikipg build-reference-order`. `repair-reference-snak`과 같은 코드(`internal/repair`, `Config.Order`)를 쓴다.
+  - `entity_raw`를 줄 순서로 배치마다 읽는다(작업자 병렬, 적용은 줄 순서).
+  - 출현마다 적재기와 같은 행을 만든다(`occurrencesOf`, 같은 순서 규칙). 그 행을 `reference_snak`과 비교한다(`judge`: same·order·content·missing).
+  - order인 출현의 순열(`permOf`)을 쓴다.
+  - `reference_snak`과 다른 표는 읽기만 한다. 쓰기 실행은 `repair-reference-snak`과 같은 advisory lock을 잡아 둘이 겹치지 않는다.
+  - 배치의 행 쓰기와 체크포인트(`reference_snak_order_checkpoint`, 판·구간 이름마다)는 한 트랜잭션이다. 그래서 중단(SIGINT) 뒤 같은 명령으로 정확히 이어진다.
+  - 출현마다 결과가 정해져 있어 구간이 겹쳐도 같은 행이 된다. 같은 순열이면 행을 다시 쓰지 않는다(`ON CONFLICT … WHERE perm IS DISTINCT FROM`).
+  - 플래그·세션 설정(`jit=off`, `enable_seqscan=off`, 병렬 0, `-dry-run`은 읽기 전용 세션)은 repair와 같다.
+  - RefSet은 쓰지 않는다(`-ref-limit`는 받기만 한다).
+
+```sh
+GOMEMLIMIT=2GiB wikipg build-reference-order -dry-run -entities Q1-Q10000 -workers 4   # 세기만
+GOMEMLIMIT=2GiB wikipg build-reference-order -workers 8 -status 60s                   # 전 구간 쓰기, 같은 명령으로 재개
+```
+
+- **적재 순서.** 새로 적재할 때는 4.3 뒤에 4.4로 이 도구를 돌린다(`sql/wikidata.sql` 4.4).
+  - 적재기 안에서 만들지 않는다. 어느 출현이 첫 출현인지는 4.2를 마쳐야 정해진다.
+  - 적재 중에 모든 출현의 순서를 남기려면 `statement_reference` 규모의 스테이징이 든다.
+  - 도구는 적재기의 행 만들기(`load.Rows.AddEntity`)를 그대로 쓰므로 순서 규칙이 같다.
+- **실행 기록(20261019 판 dump 1, 20261021 Lexeme dump 2):** `geul-dev files/wikidata/reference-order-2026-10-29.md`.
+  - Q1–Q10000: 출현 410,261개 중 895개(449개체), 내용 차이 0. 10/29 repair dry-run의 order 895와 같다.
+  - P1–P14977: 52,997개 중 7개.
+  - 전 구간(2026-10-29, 4h17m, `-workers 8`): 출현 1,333,752,763개 중 1,204,226개(0.090%, 653,065개체). 내용 차이 0, statement_reference 차이 0. 표 141 MiB.
+  - dump 2(Lexeme, 2026-10-29, 58s, `-from-line 2`): 2,701,536개 중 184개(158개체). 내용 차이 0, statement_reference 차이 0. 표는 두 판 합쳐 1,204,410행.
+  - 체크포인트 키 결함 — **수정됨(2026-10-29).** 두 체크포인트 표(`reference_snak_order_checkpoint`, `repair_reference_snak_checkpoint`)의 PK가 `run`뿐이고 저장이 `ON CONFLICT (run)`이라, 다른 판을 같은 구간 이름(`lines:0-0`)으로 쓰면 앞 판 행의 줄 번호를 덮어썼다(재개는 `run`·`dump_id`로 읽으므로 다른 판의 위치에서 시작하거나 처음부터 다시 했다). 표 행에는 영향이 없었다. dump 2는 `-from-line 2`(구간 `lines:2-0`)로 피해 돌렸다.
+    - 수정: PK를 `(dump_id, run)`으로, 저장을 `ON CONFLICT (dump_id, run)`, 조회를 `WHERE dump_id AND run`으로 바꿨다. 처리 표 `repair_reference_snak_done`은 이미 `(hash, dump_id)`, `reference_snak_order`는 `statement_id`에 판이 들어 있어 문제가 없다.
+    - 시작할 때 체크포인트 표의 키를 확인한다(`checkKey`, dry-run 포함). 키가 `(dump_id, run)`이 아니면 이전 SQL을 안내하며 멈춘다. 옛 표에서 조용히 틀리게 돌지 않는다.
+    - 이전: `PGOPTIONS='-c search_path=wikidata' psql -w -v ON_ERROR_STOP=1 -f sql/migrate_checkpoint_key.sql`. 있는 표만 옮기고(다시 돌려도 된다), 행의 `dump_id`가 `dump`에 있고 `line_no`가 그 판의 마지막 줄을 넘지 않는지 확인한 뒤 PK만 바꾼다. geuldev에서 2026-10-29 실행: `reference_snak_order_checkpoint` 4행(dump 1 `lines:0-0` 121,971,282·`entities:Q1-Q10000` 108,864,142·`entities:P1-P14977` 121,964,347, dump 2 `lines:2-0` 1,707,633) 그대로 키만 바뀜. `repair_reference_snak_checkpoint`는 없어 건너뜀.
+    - 확인: dry-run이 판마다 자기 체크포인트를 읽는다(dump 1 `lines:0-0` 121,971,282, dump 2 `lines:0-0` 0, dump 2 `lines:2-0` 1,707,633). 회귀 테스트 `TestSaveCheckpointDumps`(두 판이 같은 구간 이름으로 번갈아 저장·재개), 이전 SQL 테스트 `TestCheckKey`.
 
 ## statement_guid 비고유 (2026-10-28)
 
@@ -78,7 +121,7 @@ cd draft/wikipg
 go run ./cmd/wikipg -in ~/.clari/repos/geul/files/wikidata/wikidata-20261019-all.json.bz2 -commit "$(git rev-parse HEAD)"
 ```
 
-- 스키마: `psql -d geuldev -f sql/wikidata.sql`은 1~3절(타입·테이블)만 만든다. 4절(재개 정리·출처 중복 정리·제약·색인)은 주석으로 되어 있고, 적재를 마친 뒤 주석을 풀어 실행한다.
+- 스키마: `psql -d geuldev -f sql/wikidata.sql`은 1~3절(타입·테이블)만 만든다. 4절(재개 정리·출처 중복 정리·제약·색인)은 주석으로 되어 있고, 적재를 마친 뒤 주석을 풀어 실행한다. 끝으로 4.4 `wikipg build-reference-order`로 출현별 출처 snak 순서를 만든다(위 "출현별 출처 snak 순서").
 - 테이블: `dump`(파일·URL·크기·MD5·SHA-1·SHA-256·적재 도구 커밋), `entity_raw`(덤프 줄 원문), `load_error`, `entity`, `label`, `description`, `alias`, `sitelink`, `statement`, `qualifier`, `reference`, `statement_reference`, `reference_snak`, Lexeme용 `lexeme`, `lemma`, `form`, `form_representation`, `sense`, `sense_gloss`. 개체 단위 테이블은 모두 `dump_id`를 가진다.
 - 기본값은 기계를 30% 남긴다: CPU 70% 중 1/5 압축 해제(lbzip2), 2/5 JSON 파싱, 작성자(DB 연결) 4, 배치 8 MiB(메모리 약 1 GB). 2026-10-26 측정에서 작성자 4·8 MiB가 가장 빨랐다.
 - Lexeme은 별도 덤프(`wikidata-YYYYMMDD-lexemes.json.bz2`)라 다른 판 번호로 적재한다: `-in …lexemes.json.bz2 -dump-id 2`. Form·Sense도 `entity`에 행(type `form`·`sense`, kind L)을 두어 그 statement(`entity_id` = `L4-F1`)가 가리킬 개체가 있다. 표제어·어형 표기는 낱말 자체라 `-langs`로 거르지 않고, 뜻풀이(gloss)는 거른다. Lexeme·Form·Sense의 statement 키는 한 줄 안에서 이어진다.

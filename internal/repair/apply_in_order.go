@@ -12,7 +12,7 @@ import (
 
 // applyInOrder reads outcomes until the channel closes, keeps each batch
 // until the ones before it are applied (drainPending) and writes statusLine
-// to c.Log every c.Status. The first failed batch or apply cancels the run
+// to c.Log every c.Status, after the local time. The first failed batch or apply cancels the run
 // (stop) and is returned; later outcomes are only drained.
 func applyInOrder(db *sql.DB, c Config, results <-chan outcome, tokens <-chan struct{}, stop func(), st *Stats) error {
 	pending := map[int64]Found{}
@@ -34,7 +34,7 @@ func applyInOrder(db *sql.DB, c Config, results <-chan outcome, tokens <-chan st
 		}
 		if time.Since(tick) >= c.Status {
 			tick = time.Now()
-			fmt.Fprintln(c.Log, statusLine(*st, time.Since(start)))
+			fmt.Fprintln(c.Log, time.Now().Format("2006-01-02 15:04:05"), statusLine(*st, time.Since(start)))
 		}
 	}
 	st.Elapsed = time.Since(start)

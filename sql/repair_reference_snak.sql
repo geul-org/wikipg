@@ -18,11 +18,15 @@ CREATE TABLE IF NOT EXISTS repair_reference_snak_done (
     PRIMARY KEY (hash, dump_id)
 );
 
--- 구간별 재개 지점. run은 구간 이름(lines:2-121971282, entities:Q1-Q10000), line_no는 이 줄까지
--- 처리를 마쳤다는 뜻이다. 배치의 교체·처리 표·체크포인트는 한 트랜잭션에 커밋된다.
+-- 구간별 재개 지점. 키는 (dump_id, run)이다. run은 구간 이름(lines:2-121971282, entities:Q1-Q10000)이고
+-- 판과 무관하게 같아질 수 있어(전체 구간은 어느 판이든 lines:0-0) 판 번호와 함께 키가 된다. line_no는
+-- 이 줄까지 처리를 마쳤다는 뜻이다. 배치의 교체·처리 표·체크포인트는 한 트랜잭션에 커밋된다.
+-- 2026-10-29 이전 표는 키가 run뿐이었다. 그런 표는 migrate_checkpoint_key.sql로 옮긴다(도구는 시작할 때
+-- 키를 확인하고, 옛 키면 멈춘다).
 CREATE TABLE IF NOT EXISTS repair_reference_snak_checkpoint (
-    run      text        PRIMARY KEY,
     dump_id  smallint    NOT NULL,
+    run      text        NOT NULL,
     line_no  bigint      NOT NULL,
-    updated  timestamptz NOT NULL DEFAULT now()
+    updated  timestamptz NOT NULL DEFAULT now(),
+    PRIMARY KEY (dump_id, run)
 );

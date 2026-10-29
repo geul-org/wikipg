@@ -13,7 +13,7 @@ func TestLockError(t *testing.T) {
 	if lockError(e) != e {
 		t.Fatal("pass through")
 	}
-	if err := lockError(nil); err == nil || !strings.Contains(err.Error(), "holds the lock") {
+	if err := lockError(nil); err == nil || !strings.Contains(err.Error(), "build-reference-order run holds the lock") {
 		t.Fatal(err)
 	}
 }

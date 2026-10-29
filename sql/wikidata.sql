@@ -32,7 +32,8 @@
 --   | object_type에 datavalue 형식과 datatype이 섞임     | value_type(datavalue.type)과 datatype(snak.datatype) 분리 |
 --
 -- 적재 순서: 이 파일의 1~3절(타입·테이블)을 먼저 실행하고, COPY로 적재한 뒤
--- 4절(제약·색인)을 실행한다. 대량 적재 중 색인을 유지하면 수 배 느리다.
+-- 4절(정리·제약·색인, 4.1~4.3)을 실행하고, 끝으로 4.4 출현별 출처 snak 순서를 만든다(wikipg
+-- build-reference-order). 대량 적재 중 색인을 유지하면 수 배 느리다.
 -- 4절을 실행하기 전에는 질의가 전부 순차 스캔이다. 적재 중 시험 질의는 하지 않는다.
 --
 -- 판(dump_id): 개체 단위 테이블은 모두 dump_id를 가진다. 판을 둘 이상 넣어 비교할 수
@@ -265,8 +266,10 @@ CREATE TABLE statement_reference (
 --   2. 그 안에서 적재기의 statement 순서(속성 ID 문자열 순, 같은 속성 안은 claims 배열 순;
 --      Lexeme은 Lexeme → Form → Sense 순),
 --   3. 그 statement의 references 배열 순서상 첫 번째.
--- 이 규칙은 DB만으로 다시 계산된다(statement_reference). 출현마다의 순서는 entity_raw에만 남는다.
--- 원문 순서가 필요하면 entity_raw의 그 개체 줄을 읽는다.
+-- 이 규칙은 DB만으로 다시 계산된다(statement_reference). 순서가 이 표와 다른 출현은
+-- reference_snak_order(sql/reference_snak_order.sql, 4.4 `wikipg build-reference-order`)가 출현마다
+-- 순열(perm: 이 표의 ordinal을 그 출현 순서로)을 둔다. 행이 없는 출현은 이 표의 순서 그대로다. 둘 다
+-- entity_raw에서 다시 만들 수 있다.
 --
 -- occ_statement_id, occ_ordinal은 적재 스테이징 열이다: 이 행을 쓴 출현(statement_reference의
 -- statement_id, ordinal). 적재기는 같은 hash를 여러 번(병렬 작업자·메모리 한도 때문에) 쓰지만
@@ -444,3 +447,18 @@ COMMIT;
 --
 -- ANALYZE;
 -- COMMIT;
+--
+-- 4.4 출현별 출처 snak 순서 (2026-10-29) ------------------------------------------
+--
+-- 4.2가 hash마다 첫 출현의 목록만 남기므로, 같은 hash의 다른 출현 중 snak 순서(속성 순서, 같은 속성 안
+-- 값 순서)가 다른 것의 순서는 reference_snak에 없다. 4.3을 마친 뒤(entity_raw_dump_line,
+-- statement_reference·reference_snak PK가 필요하다) 적재 도구로 그 출현들의 순서를 만든다. 도구는
+-- entity_raw를 줄 순서로 배치마다 읽어 적재기와 같은 행을 만들고(같은 순서 규칙), 출현마다
+-- reference_snak과 비교해 내용이 같고 순서만 다른 출현의 순열을 reference_snak_order에 쓴다. 배치의
+-- 행과 체크포인트가 한 트랜잭션이라 중단 뒤 같은 명령으로 정확히 이어진다. 표는 도구가 만든다
+-- (sql/reference_snak_order.sql). 적재기 안에서 만들지 않는 이유: 출현이 첫 출현인지는 4.2를 마쳐야
+-- 정해지고, 적재 중에 모든 출현의 순서를 남기려면 statement_reference 규모(13억 행)의 스테이징이 든다.
+--
+--   wikipg build-reference-order -dry-run -entities Q1-Q10000   # 세기만(읽기 전용 세션)
+--   wikipg build-reference-order                                # 전 구간 쓰기, 중단 뒤 같은 명령으로 재개
+--   ANALYZE wikidata.reference_snak_order;

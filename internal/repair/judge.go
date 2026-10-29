@@ -1,12 +1,13 @@
 //ff:func feature=repair type=helper control=iteration dimension=2
-//ff:what judge — compares every occurrence of a batch with the stored rows of its hash; the first occurrence of each hash becomes its HashCheck
+//ff:what judge — compares every occurrence of a batch with the stored rows of its hash; the first occurrence of each hash becomes its HashCheck, an occurrence in another order its OccOrder
 package repair
 
 // judge compares each occurrence of d with the stored rows of its hash
 // (stored, values in jsonb text form by norm): every occurrence is counted in
 // Occurrences (its entity listed once per kind of difference), and the first
 // occurrence of each hash in the batch (d.Occs is in dump order) becomes a
-// HashCheck with its rows.
+// HashCheck with its rows. Each occurrence whose snaks are the stored ones in
+// another order (Order) is listed in Orders with its permutation (permOf).
 func judge(d spanData, stored map[string][]Snak, norm map[string]string) Found {
 	f := Found{}
 	seen := map[string]bool{}
@@ -21,6 +22,9 @@ func judge(d spanData, stored map[string][]Snak, norm map[string]string) Found {
 		if v == Content && !content[o.Entity] {
 			content[o.Entity] = true
 			f.ContentEntities = append(f.ContentEntities, o.Entity)
+		}
+		if v == Order {
+			f.Orders = append(f.Orders, OccOrder{Hash: o.Hash, At: o.At, Entity: o.Entity, Perm: permOf(want, stored[o.Hash])})
 		}
 		if v == Order && !order[o.Entity] {
 			order[o.Entity] = true

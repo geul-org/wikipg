@@ -1,8 +1,9 @@
 //ff:func feature=repair type=helper control=sequence
-//ff:what TestJudge — every occurrence is counted, entities listed once per kind of difference, each hash checked at its first occurrence
+//ff:what TestJudge — every occurrence is counted, entities listed once per kind of difference, each hash checked at its first occurrence, occurrences in another order listed with their permutation
 package repair
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/geul-org/wikipg/internal/load"
@@ -26,5 +27,8 @@ func TestJudge(t *testing.T) {
 	}
 	if len(f.Hashes) != 2 || f.Hashes[0].Verdict != Order || f.Hashes[0].At.Statement != 1 || f.Hashes[1].Verdict != Content {
 		t.Fatalf("hashes %+v", f.Hashes)
+	}
+	if len(f.Orders) != 2 || f.Orders[0].At.Statement != 1 || f.Orders[1].At.Statement != 2 || f.Orders[1].Hash != "h" || f.Orders[1].Entity != "Q1" || fmt.Sprint(f.Orders[0].Perm) != "[1 0]" {
+		t.Fatalf("orders %+v", f.Orders)
 	}
 }
