@@ -2,7 +2,7 @@
 
 `wikipg` loads a Wikidata JSON dump into PostgreSQL without losing anything. Entities, labels, descriptions, aliases, claims, qualifiers, references, sitelinks and Lexemes are stored in dump order. Every dump line is also kept verbatim, and the dump itself (file, URL, size, checksums, loader commit) is recorded in a `dump` row.
 
-wikipg does not depend on GEUL. [gogeulwiki](https://github.com/geul-org/gogeulwiki) reads the loaded database and converts it into GEUL documents.
+wikipg does not depend on GEUL. [wikigeul](https://github.com/geul-org/wikigeul) reads the loaded database and converts it into GEUL documents.
 
 ## Install
 

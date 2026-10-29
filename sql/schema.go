@@ -1,5 +1,5 @@
 // Package sql gives the wikidata schema (wikidata.sql) to other modules, such
-// as gogeulwiki's tests, without copying it.
+// as wikigeul's tests, without copying it.
 package sql
 
 import _ "embed"
